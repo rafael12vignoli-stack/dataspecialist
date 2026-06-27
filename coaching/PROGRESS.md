@@ -90,7 +90,11 @@ SELECT * FROM customers;
 ## Interactive Dashboard
 - Live app source: `public/index.html` (interactive HUD + Lesson 1 quest grader; saves progress in browser localStorage).
 - Hosted via GitHub Pages (workflow `.github/workflows/pages.yml`, deploys on push to the coaching branch).
-- Public URL: https://rafael12vignoli-stack.github.io/dataspecialist/
+- Working live URL (no setup needed, via GitHub HTML preview):
+  https://htmlpreview.github.io/?https://raw.githubusercontent.com/rafael12vignoli-stack/dataspecialist/claude/data-specialist-coaching-8cdr5x/public/index.html
+- Permanent Pages URL (needs one-time owner toggle: Settings -> Pages -> Source: GitHub Actions, then re-run the workflow):
+  https://rafael12vignoli-stack.github.io/dataspecialist/
+- NOTE: Pages auto-enable via Actions token failed ("Resource not accessible by integration") — first-time Pages enablement must be done by the repo owner in Settings.
 
 ## Session Log
 - 2026-06-27 — Resumed session. Built interactive HTML dashboard; set up GitHub Pages hosting (Actions workflow). Lesson 1 (Joins) mini-boss validation pending (Rafael says he finished; awaiting his 2 explanations to award +150 XP / L3).
