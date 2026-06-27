@@ -88,9 +88,9 @@
   textarea,input[type=text],input[type=number]{
     width:100%;background:#0c0e18;color:var(--txt);border:1px solid var(--line);
     border-radius:10px;padding:10px;font-family:"Consolas",monospace;font-size:13px;resize:vertical}
-  textarea{min-height:104px}
+  textarea{min-height:90px}
   input[type=number]{width:120px;text-align:center;font-family:inherit}
-  input[type=text]{width:150px;text-align:center;font-family:inherit}
+  input[type=text]{width:170px;text-align:center;font-family:inherit}
   .num-wrap{flex:none}
   button{
     cursor:pointer;border:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13px;
@@ -117,6 +117,7 @@
   .sec-title{font-size:13px;letter-spacing:1.5px;color:var(--mut);text-transform:uppercase;margin-bottom:14px}
   .cleared{font-size:12px;color:var(--green);border:1px solid rgba(61,220,132,.4);background:rgba(61,220,132,.08);
     border-radius:8px;padding:2px 8px;font-weight:700}
+  .xref{font-family:Consolas,monospace;font-size:12px;color:var(--cyan)}
 </style>
 </head>
 <body>
@@ -155,84 +156,77 @@
     <div class="map" id="map"></div>
   </div>
 
-  <!-- ACTIVE QUEST: LESSON 3 -->
+  <!-- ACTIVE QUEST: LESSON 4 (PySpark) -->
   <div class="card">
     <div class="quest-h">
       <div>
-        <div class="sec-title" style="margin-bottom:4px">📜 Active Quest <span class="cleared">✔ L1 Joins · L2 Dedup cleared</span></div>
-        <h2 style="font-size:20px">Lesson 3 — Window Functions: latest row per group 🪟</h2>
+        <div class="sec-title" style="margin-bottom:4px">📜 Active Quest <span class="cleared">✔ L1–L3 SQL cleared</span></div>
+        <h2 style="font-size:20px">Lesson 4 — PySpark DataFrames: select &amp; filter ⚡</h2>
       </div>
-      <div class="reward">Reward: +250 XP · 🔓 Unlocks “Window wizard”</div>
+      <div class="reward">Reward: +300 XP · 🔓 Unlocks “PySpark pilot”</div>
     </div>
 
     <p class="desc" style="margin-top:10px">
-      <b>Why it matters:</b> "give me the <b>latest status per case</b>", "the <b>most recent balance per card</b>", "keep <b>one row per key</b> (the newest)" — this is the daily bread of a Data Specialist. <code>ROW_NUMBER() OVER (PARTITION BY … ORDER BY … DESC)</code> numbers rows <i>within each group</i>; keep <code>rn = 1</code> to grab the latest.
-      <br>🧩 <b>PARTITION BY</b> = "restart the counter for each group." <b>ORDER BY … DESC</b> = "newest first, so rn 1 = latest."
-      <br>⚠️ <b>The trap:</b> you <i>cannot</i> write <code>WHERE rn = 1</code> in the same SELECT that creates <code>rn</code> — wrap it in a CTE/subquery first (or use Databricks <code>QUALIFY</code>).
+      <b>Why it matters:</b> in Databricks, half your debugging is <b>PySpark</b>, not SQL. Good news — it's the <i>same logic</i>, new syntax. You already think in SELECT/WHERE; now you'll <b>chain methods</b> on a DataFrame instead.
+      <br>🧠 <b>Mental map:</b> <span class="xref">SELECT cols</span> → <span class="xref">df.select("a","b")</span> · <span class="xref">WHERE x &gt; 25</span> → <span class="xref">df.filter(F.col("x") &gt; 25)</span> · a DataFrame (<span class="xref">df</span>) is just a table held in a variable.
+      <br>⚠️ <b>The trap:</b> PySpark is <b>lazy</b> — <span class="xref">.select()/.filter()</span> build a plan but show nothing until you call an <b>action</b> like <span class="xref">.show()</span> or <span class="xref">.count()</span>.
     </p>
 
     <details style="margin-top:8px" open>
-      <summary>▶ Databricks setup cell (run this first)</summary>
-      <div class="setup">WITH case_status AS (
-  SELECT * FROM VALUES
-    (10, 'open',      DATE'2026-01-01'),
-    (10, 'in_review', DATE'2026-01-03'),
-    (10, 'closed',    DATE'2026-01-05'),
-    (20, 'open',      DATE'2026-01-02'),
-    (20, 'closed',    DATE'2026-01-04')
-  AS case_status(case_id, status, updated_at)
-)
-SELECT * FROM case_status;</div>
+      <summary>▶ Databricks setup cell (Python — run this first)</summary>
+      <div class="setup">from pyspark.sql import functions as F
+
+data = [(101, 1, 50), (102, 1, 30), (103, 2, 20)]
+df = spark.createDataFrame(data, ["order_id", "customer_id", "amount"])
+df.show()</div>
     </details>
 
     <!-- TASK A -->
     <div class="task">
-      <h3>🎯 Task A — Rank rows within each case</h3>
-      <p class="desc">Add a column <code>rn</code> = <code>ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC)</code>. Predict before running.</p>
+      <h3>🎯 Task A — Translate SQL → PySpark</h3>
+      <p class="desc">Reproduce <span class="xref">SELECT order_id, amount FROM orders WHERE amount &gt; 25</span> in PySpark, and call <code>.show()</code>. Predict first.</p>
       <div class="lblrow">
-        <div class="num-wrap"><label>Total rows returned</label><input type="number" id="rnRows" placeholder="?"/></div>
-        <div class="num-wrap"><label>rn of case 10's 'open' row</label><input type="number" id="rnOpen" placeholder="?"/></div>
+        <div class="num-wrap"><label>Rows returned</label><input type="number" id="psRows" placeholder="?"/></div>
+        <div class="num-wrap"><label>Which order_ids? (comma-sep)</label><input type="text" id="psIds" placeholder="e.g. 101, 102"/></div>
       </div>
-      <label>Your ranking query</label>
-      <textarea id="qRank" placeholder="SELECT case_id, status, updated_at,&#10;  ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC) AS rn&#10;FROM case_status"></textarea>
+      <label>Your PySpark code</label>
+      <textarea id="qPy" placeholder='df.filter(F.col("amount") > 25).select("order_id", "amount").show()'></textarea>
       <div class="btns">
-        <button onclick="checkRank()">✅ Check</button>
-        <button class="ghost" onclick="toggleHint('hintRank')">💡 Hint</button>
+        <button onclick="checkPy()">✅ Check</button>
+        <button class="ghost" onclick="toggleHint('hintPy')">💡 Hint</button>
       </div>
-      <div class="hintbox" id="hintRank" style="display:none">The window function keeps ALL rows (5 of them) and just adds a number. <code>PARTITION BY case_id</code> restarts numbering per case. <code>ORDER BY updated_at DESC</code> → newest gets rn 1. So case 10's oldest row ('open', Jan 1) gets the highest rn.</div>
-      <div class="verdict" id="vRank"></div>
-      <div class="done-stamp" id="doneRank">✔ Ranking correct</div>
+      <div class="hintbox" id="hintPy" style="display:none">Chain the methods on <code>df</code>: <code>.filter(F.col("amount") &gt; 25)</code> keeps the rows, <code>.select("order_id","amount")</code> picks the columns, <code>.show()</code> actually runs it. Order of filter/select doesn't matter here. <code>.where(...)</code> is an alias for <code>.filter(...)</code>.</div>
+      <div class="verdict" id="vPy"></div>
+      <div class="done-stamp" id="donePy">✔ Translation correct</div>
     </div>
 
     <!-- TASK B -->
     <div class="task">
-      <h3>🎯 Task B — Keep only the latest row per case <span class="tag-focus">THE TRAP</span></h3>
-      <p class="desc">Return one row per case: its <b>latest</b> status. Wrap Task A in a CTE and filter <code>rn = 1</code> (or use <code>QUALIFY</code>).</p>
+      <h3>🎯 Task B — Add a column with <code>withColumn</code> <span class="tag-focus">NEW</span></h3>
+      <p class="desc">Add a <code>fee</code> column = 10% of <code>amount</code> using <code>withColumn</code>. Predict the fee on order 101.</p>
       <div class="lblrow">
-        <div class="num-wrap"><label>Rows returned</label><input type="number" id="latRows" placeholder="?"/></div>
-        <div class="num-wrap"><label>Case 10 latest status</label><input type="text" id="lat10" placeholder="?"/></div>
-        <div class="num-wrap"><label>Case 20 latest status</label><input type="text" id="lat20" placeholder="?"/></div>
+        <div class="num-wrap"><label>fee on order 101 (amount 50)</label><input type="number" id="feeVal" placeholder="?" step="any"/></div>
       </div>
-      <label>Your "latest per case" query</label>
-      <textarea id="qLatest" placeholder="WITH ranked AS (&#10;  SELECT ..., ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC) AS rn&#10;  FROM case_status&#10;)&#10;SELECT case_id, status FROM ranked WHERE rn = 1"></textarea>
+      <label>Your PySpark code</label>
+      <textarea id="qFee" placeholder='df.withColumn("fee", F.col("amount") * 0.1).show()'></textarea>
       <div class="btns">
-        <button onclick="checkLatest()">✅ Check</button>
-        <button class="ghost" onclick="toggleHint('hintLatest')">💡 Hint</button>
+        <button onclick="checkFee()">✅ Check</button>
+        <button class="ghost" onclick="toggleHint('hintFee')">💡 Hint</button>
       </div>
-      <div class="hintbox" id="hintLatest" style="display:none">You can't filter a window function in the same WHERE. Two valid ways: (1) put the ROW_NUMBER query in a CTE <code>WITH ranked AS (...)</code> then <code>SELECT ... FROM ranked WHERE rn = 1</code>; or (2) Databricks shortcut: add <code>QUALIFY ROW_NUMBER() OVER (...) = 1</code> directly.</div>
-      <div class="verdict" id="vLatest"></div>
-      <div class="done-stamp" id="doneLatest">✔ Latest-per-group correct</div>
+      <div class="hintbox" id="hintFee" style="display:none"><code>df.withColumn("fee", F.col("amount") * 0.1)</code> returns a NEW DataFrame with the extra column (it doesn't mutate <code>df</code>). <code>F.col("amount")</code> = "the amount column"; multiply it by 0.1 for 10%.</div>
+      <div class="verdict" id="vFee"></div>
+      <div class="done-stamp" id="doneFee">✔ Column added</div>
     </div>
 
     <div class="footbar" style="margin-top:16px">
-      <span id="progressMsg">Clear both tasks to claim +250 XP and reach Level 5.</span>
+      <span id="progressMsg">Clear both tasks to claim +300 XP and reach Level 6.</span>
       <span><button class="ghost" onclick="resetAll()">↺ Reset progress</button></span>
     </div>
   </div>
 
   <div class="footbar">
     <span>💾 Progress auto-saves in your browser (localStorage).</span>
-    <span>Data Specialist Program · L4 Window Function Navigator</span>
+    <span>Data Specialist Program · L5 Databricks Builder</span>
   </div>
 </div>
 
@@ -241,25 +235,25 @@ SELECT * FROM case_status;</div>
   <div class="box">
     <div class="big">🎉</div>
     <h2 style="color:var(--gold)">LEVEL UP!</h2>
-    <p>You cleared <b>Lesson 3 — Window Functions</b>, earned <b>+250 XP</b>, unlocked <b>🏅 Window wizard</b>, and advanced to <b>Level 5 — Databricks Builder</b>!</p>
+    <p>You cleared <b>Lesson 4 — PySpark DataFrames</b>, earned <b>+300 XP</b>, unlocked <b>🏅 PySpark pilot</b>, and advanced to <b>Level 6 — PySpark Converter</b>!</p>
     <p class="mut" style="font-size:12px">(click anywhere to close)</p>
   </div>
 </div>
 
 <script>
-/* ===================== PLAYER STATE (now Level 4) ===================== */
+/* ===================== PLAYER STATE (now Level 5) ===================== */
 const STATE = {
-  level:4, levelName:"Window Function Navigator", icon:"🪟",
-  xp:525, xpMax:775, lessonXP:250, nextLevel:"Level 5",
-  focus:"Window functions",
+  level:5, levelName:"Databricks Builder", icon:"🧱",
+  xp:775, xpMax:1075, lessonXP:300, nextLevel:"Level 6",
+  focus:"PySpark",
   skills:[
-    {n:"SQL foundations",v:84,c:"var(--cyan)"},
+    {n:"SQL foundations",v:86,c:"var(--cyan)"},
     {n:"Joins",v:70,c:"var(--cyan)"},
     {n:"Data quality",v:70,c:"var(--cyan)"},
+    {n:"Window functions",v:70,c:"var(--cyan)"},
     {n:"Filtering & aggregation",v:75,c:"var(--cyan)"},
-    {n:"Investigation instinct",v:68,c:"var(--purple)"},
-    {n:"Window functions",v:20,c:"var(--gold)",focus:true},
-    {n:"PySpark",v:25,c:"var(--purple)"},
+    {n:"Investigation instinct",v:70,c:"var(--purple)"},
+    {n:"PySpark",v:25,c:"var(--gold)",focus:true},
   ],
   badges:[
     {n:"Calibration complete",i:"🎓",s:"earned"},
@@ -268,13 +262,13 @@ const STATE = {
     {n:"Sharp instinct",i:"🔍",s:"earned"},
     {n:"Join master",i:"🔗",s:"earned"},
     {n:"Dedup detective",i:"🕵️",s:"earned"},
-    {n:"Window wizard",i:"🪟",s:"prog"},
-    {n:"PySpark pilot",i:"⚡",s:"locked"},
+    {n:"Window wizard",i:"🪟",s:"earned"},
+    {n:"PySpark pilot",i:"⚡",s:"prog"},
     {n:"Data Specialist",i:"👑",s:"locked"},
   ],
   levels:[
     {n:"Explorer",done:true},{n:"SQL Op",done:true},{n:"Data Q Analyst",done:true},
-    {n:"Window Func",cur:true},{n:"D'bricks Builder"},{n:"PySpark Conv"},
+    {n:"Window Func",done:true},{n:"D'bricks Builder",cur:true},{n:"PySpark Conv"},
     {n:"Metrics Invest"},{n:"👑 Specialist"},
   ],
 };
@@ -317,39 +311,39 @@ function renderMap(){
 }
 function toggleHint(id){const e=document.getElementById(id);e.style.display=e.style.display==='none'?'block':'none';}
 
-/* ===================== LESSON 3 LOGIC ===================== */
+/* ===================== LESSON 4 LOGIC ===================== */
 const norm=s=>(s||'').toLowerCase().replace(/\s+/g,' ').trim();
-let passRank=false, passLatest=false;
+let passPy=false, passFee=false;
 
-function checkRank(){
-  const q=norm(document.getElementById('qRank').value);
-  const rows=document.getElementById('rnRows').value.trim();
-  const open=document.getElementById('rnOpen').value.trim();
-  const v=document.getElementById('vRank');
+function checkPy(){
+  const q=norm(document.getElementById('qPy').value);
+  const rows=document.getElementById('psRows').value.trim();
+  const ids=norm(document.getElementById('psIds').value);
+  const v=document.getElementById('vPy');
   let issues=[],wins=[];
 
-  if(rows==='5') wins.push("Total rows = <b>5</b> ✓ — window functions keep every row, just add a number.");
-  else if(rows==='') issues.push("Predict the <b>total rows returned</b>.");
-  else issues.push(`${rows} rows? A window function doesn't drop rows — all <b>5</b> come back, each with an rn.`);
+  if(rows==='2') wins.push("Rows = <b>2</b> ✓ — only amounts above 25.");
+  else if(rows==='') issues.push("Predict the <b>rows returned</b>.");
+  else issues.push(`${rows}? amount &gt; 25 keeps 50 and 30 only → <b>2</b> rows.`);
 
-  if(open==='3') wins.push("rn of case 10 'open' = <b>3</b> ✓ — it's the oldest, and DESC puts newest at rn 1.");
-  else if(open==='') issues.push("Predict the <b>rn of case 10's 'open' row</b>.");
-  else issues.push(`rn ${open}? Case 10 has 3 rows; with ORDER BY ... DESC the oldest ('open', Jan 1) is rn <b>3</b>.`);
+  const has101=/101/.test(ids), has102=/102/.test(ids), has103=/103/.test(ids);
+  if(has101&&has102&&!has103) wins.push("order_ids <b>101, 102</b> ✓ (103 has amount 20, filtered out).");
+  else if(ids==='') issues.push("Predict <b>which order_ids</b> survive.");
+  else issues.push("Which order_ids? Keep amount &gt; 25 → 101 (50) and 102 (30). 103 (20) is dropped.");
 
-  if(!/row_number\s*\(\s*\)/.test(q)) issues.push("Use <code>ROW_NUMBER()</code> as the window function.");
-  else wins.push("ROW_NUMBER() used ✓");
-  if(!/over\s*\(/.test(q)) issues.push("A window function needs an <code>OVER ( … )</code> clause.");
-  if(!/partition by case_id/.test(q)) issues.push("Add <code>PARTITION BY case_id</code> so numbering restarts per case.");
-  else wins.push("PARTITION BY case_id ✓ — counter resets per case.");
-  if(!/order by/.test(q)) issues.push("Add <code>ORDER BY updated_at</code> inside OVER — without it, 'latest' is undefined.");
-  else if(!/desc/.test(q)) issues.push("Use <code>ORDER BY updated_at DESC</code> so rn 1 = the newest row (matches your prediction).");
-  else wins.push("ORDER BY updated_at DESC ✓ — newest first.");
+  if(!/\.filter\(|\.where\(/.test(q)) issues.push("Use <code>.filter(F.col(\"amount\") &gt; 25)</code> (or <code>.where(...)</code>) for the WHERE.");
+  else wins.push(".filter / .where used ✓");
+  if(!/\.select\(/.test(q)) issues.push("Use <code>.select(\"order_id\",\"amount\")</code> to pick the columns.");
+  else wins.push(".select used ✓");
+  if(!/amount/.test(q) || !/>\s*25/.test(q)) issues.push("Your condition should be <code>amount &gt; 25</code>.");
+  if(!/\.show\(|\.collect\(|\.count\(|\.display\(|display\(/.test(q)) issues.push("⚠️ Add an <b>action</b> like <code>.show()</code> — PySpark is lazy and won't run without one.");
+  else wins.push("Action (.show) present ✓ — the lazy plan actually executes.");
 
   if(issues.length===0){
-    passRank=true; v.className='verdict ok';
-    v.innerHTML=`<b>✅ Ranking correct!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
-      <p style="margin-top:8px">PARTITION = "per group", ORDER = "which is #1". You now own the hardest mental model in SQL. 🪟</p>`;
-    document.getElementById('doneRank').style.display='block';
+    passPy=true; v.className='verdict ok';
+    v.innerHTML=`<b>✅ Translation correct!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
+      <p style="margin-top:8px">Same logic as SQL, just chained on a DataFrame. You're writing PySpark now. ⚡</p>`;
+    document.getElementById('donePy').style.display='block';
   } else {
     v.className=wins.length?'verdict warn':'verdict bad';
     v.innerHTML=`<b>Almost — fix these:</b><ul>${issues.map(x=>'<li class="cross">'+x+'</li>').join('')}</ul>
@@ -358,45 +352,27 @@ function checkRank(){
   save(); maybeLevelUp();
 }
 
-function checkLatest(){
-  const q=norm(document.getElementById('qLatest').value);
-  const rows=document.getElementById('latRows').value.trim();
-  const c10=norm(document.getElementById('lat10').value);
-  const c20=norm(document.getElementById('lat20').value);
-  const v=document.getElementById('vLatest');
+function checkFee(){
+  const q=norm(document.getElementById('qFee').value);
+  const fee=document.getElementById('feeVal').value.trim();
+  const v=document.getElementById('vFee');
   let issues=[],wins=[];
 
-  if(rows==='2') wins.push("Rows = <b>2</b> ✓ — one latest row per case.");
-  else if(rows==='') issues.push("Predict the <b>rows returned</b>.");
-  else issues.push(`${rows}? Two cases → <b>2</b> rows (one latest each).`);
+  if(fee==='5'||fee==='5.0') wins.push("fee on order 101 = <b>5.0</b> ✓ (50 × 0.1).");
+  else if(fee==='') issues.push("Predict the fee on order 101.");
+  else issues.push(`${fee}? 10% of 50 = <b>5.0</b>.`);
 
-  if(c10==='closed') wins.push("Case 10 latest = <b>closed</b> ✓ (Jan 5).");
-  else if(c10==='') issues.push("Predict case 10's latest status.");
-  else issues.push(`Case 10 → its newest row (Jan 5) is <b>closed</b>, not "${c10}".`);
-
-  if(c20==='closed') wins.push("Case 20 latest = <b>closed</b> ✓ (Jan 4).");
-  else if(c20==='') issues.push("Predict case 20's latest status.");
-  else issues.push(`Case 20 → its newest row (Jan 4) is <b>closed</b>, not "${c20}".`);
-
-  const hasRowNum=/row_number\s*\(\s*\)/.test(q);
-  const usesQualify=/qualify/.test(q);
-  const usesCTE=/with .* as \(/.test(q) && /where/.test(q) && /=\s*1/.test(q);
-  if(!hasRowNum) issues.push("Still need <code>ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC)</code>.");
-  if(usesQualify){
-    wins.push("QUALIFY used ✓ — clean Databricks way to filter a window function.");
-  } else if(usesCTE){
-    wins.push("CTE + WHERE rn = 1 ✓ — you filtered the ranked rows correctly.");
-  } else if(/where .*row_number/.test(q)){
-    issues.push("⚠️ <b>The trap.</b> You can't put <code>ROW_NUMBER()</code> directly in <code>WHERE</code>. Wrap it in a CTE then <code>WHERE rn = 1</code>, or use <code>QUALIFY … = 1</code>.");
-  } else {
-    issues.push("To keep only the latest, filter <code>rn = 1</code> — via a CTE (<code>WITH ranked AS (...) … WHERE rn = 1</code>) or <code>QUALIFY</code>.");
-  }
+  if(!/\.withcolumn\(/.test(q)) issues.push("Use <code>df.withColumn(\"fee\", …)</code> to add the column.");
+  else wins.push(".withColumn used ✓");
+  if(!/amount/.test(q)) issues.push("Reference the amount column: <code>F.col(\"amount\")</code>.");
+  if(!/\*\s*0?\.1|0?\.1\s*\*|\/\s*10|\*\s*10\s*\/\s*100/.test(q)) issues.push("Multiply by <code>0.1</code> for 10% (e.g. <code>F.col(\"amount\") * 0.1</code>).");
+  else wins.push("× 0.1 (10%) ✓");
 
   if(issues.length===0){
-    passLatest=true; v.className='verdict ok';
-    v.innerHTML=`<b>✅ Latest-per-group nailed!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
-      <p style="margin-top:8px">This exact pattern is how you'd grab the most recent balance per card, latest status per case, or dedup keeping the newest record. 🏆</p>`;
-    document.getElementById('doneLatest').style.display='block';
+    passFee=true; v.className='verdict ok';
+    v.innerHTML=`<b>✅ Column added!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
+      <p style="margin-top:8px"><code>withColumn</code> returns a NEW DataFrame — exactly how you build derived metrics (fees, flags, GMV components) in a Databricks pipeline. 🧱</p>`;
+    document.getElementById('doneFee').style.display='block';
   } else {
     v.className=wins.length?'verdict warn':'verdict bad';
     v.innerHTML=`<b>Close — fix these:</b><ul>${issues.map(x=>'<li class="cross">'+x+'</li>').join('')}</ul>
@@ -407,38 +383,38 @@ function checkLatest(){
 
 function maybeLevelUp(){
   const msg=document.getElementById('progressMsg');
-  if(passRank&&passLatest){
+  if(passPy&&passFee){
     msg.innerHTML="🏆 Both tasks cleared! Quest complete.";
     if(!STATE.leveled){
       STATE.leveled=true; STATE.xp=STATE.xpMax;
-      STATE.skills.find(s=>s.n==='Window functions').v=70;
-      STATE.badges.find(b=>b.n==='Window wizard').s='earned';
+      STATE.skills.find(s=>s.n==='PySpark').v=60;
+      STATE.badges.find(b=>b.n==='PySpark pilot').s='earned';
       renderHUD();renderSkills();renderBadges();
       document.getElementById('toast').style.display='grid';
       save();
     }
-  } else if(passRank||passLatest){ msg.innerHTML="🟡 One task down, one to go!"; }
+  } else if(passPy||passFee){ msg.innerHTML="🟡 One task down, one to go!"; }
 }
 
 /* ===================== PERSISTENCE ===================== */
-const IDS=['rnRows','rnOpen','qRank','latRows','lat10','lat20','qLatest'];
+const IDS=['psRows','psIds','qPy','feeVal','qFee'];
 function val(id){const e=document.getElementById(id);return e?e.value:'';}
 function save(){
-  localStorage.setItem('ds_quest_l3', JSON.stringify(
-    Object.assign({passRank,passLatest,leveled:STATE.leveled||false},
+  localStorage.setItem('ds_quest_l4', JSON.stringify(
+    Object.assign({passPy,passFee,leveled:STATE.leveled||false},
       IDS.reduce((o,k)=>(o[k]=val(k),o),{}))));
 }
 function load(){
-  const raw=localStorage.getItem('ds_quest_l3'); if(!raw)return;
+  const raw=localStorage.getItem('ds_quest_l4'); if(!raw)return;
   try{
     const d=JSON.parse(raw);
     IDS.forEach(k=>{if(d[k]!=null){const e=document.getElementById(k);if(e)e.value=d[k];}});
-    if(d.passRank){passRank=true;checkRank();}
-    if(d.passLatest){passLatest=true;checkLatest();}
+    if(d.passPy){passPy=true;checkPy();}
+    if(d.passFee){passFee=true;checkFee();}
     if(d.leveled){STATE.leveled=true;maybeLevelUp();document.getElementById('toast').style.display='none';}
   }catch(e){}
 }
-function resetAll(){ if(!confirm('Reset Lesson 3 progress?'))return; localStorage.removeItem('ds_quest_l3');location.reload(); }
+function resetAll(){ if(!confirm('Reset Lesson 4 progress?'))return; localStorage.removeItem('ds_quest_l4');location.reload(); }
 
 renderHUD();renderSkills();renderBadges();renderMap();load();
 </script>

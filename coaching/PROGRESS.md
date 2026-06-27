@@ -16,37 +16,37 @@ _Last updated: 2026-06-27_
 
 ## Current State
 
-- **Level:** 4 — Window Function Navigator (cleared L1 test-out, L2 Joins, L3 Duplicate Detection)
-- **XP:** 525 / 775 (250 XP to L5 = Lesson 3 reward)
+- **Level:** 5 — Databricks Builder (cleared L1 test-out, L2 Joins, L3 Dedup, L4 Window Functions)
+- **XP:** 775 / 1075 (300 XP to L6 = Lesson 4 reward)
 
 ### Skill stats (0–100)
 | Skill | Value |
 |---|---|
-| SQL foundations | 84 |
+| SQL foundations | 86 |
 | Filtering & aggregation | 75 |
 | Joins | 70 |
 | Data quality | 70 |
-| Investigation instinct | 68 |
-| Window functions (current focus) | 20 |
-| PySpark | 25 |
+| Window functions | 70 |
+| Investigation instinct | 70 |
+| PySpark (current focus) | 25 |
 
-### Badges (6/9 earned)
+### Badges (7/9 earned)
 - [x] Calibration complete
 - [x] Grain master
 - [x] Level 1 cleared
 - [x] Sharp instinct
 - [x] Join master (Lesson 1 Joins)
 - [x] Dedup detective (Lesson 2 Duplicate Detection)
-- [ ] Window wizard (in progress — Lesson 3)
-- [ ] PySpark pilot
+- [x] Window wizard (Lesson 3 Window Functions)
+- [ ] PySpark pilot (in progress — Lesson 4)
 - [ ] Data Specialist (final boss)
 
 ## Level Map
 1. L1 Data Explorer — cleared
 2. L2 SQL Operator — cleared
 3. L3 Data Quality Analyst — cleared
-4. **L4 Window Function Navigator — current**
-5. L5 Databricks Builder
+4. L4 Window Function Navigator — cleared
+5. **L5 Databricks Builder — current**
 6. L6 PySpark Converter
 7. L7 Metrics Investigator
 8. L8 Data Specialist (final boss)
@@ -74,28 +74,30 @@ _Last updated: 2026-06-27_
 - txn_id 2 appears 2×; naive SUM 275, true GMV 225, inflation 50. All correct.
 - Coaching given: COUNT(col)=COUNT(*) only when no NULLs (spaced-rep tie to Lesson 1); real dupes may need composite-key GROUP BY.
 
-## Active Quest — Lesson 3: Window Functions — latest row per group
-Reward: +250 XP (levels to L5), unlocks "Window wizard". Targets calibration gap (window mechanics: partition reset + "latest row per group").
+## COMPLETED — Lesson 3: Window Functions (+250 XP, L4→L5, 🏅 Window wizard)
+- First attempt erred: he added GROUP BY case_id + HAVING rank=1 (recency bias from Lesson 2). Taught logical order of execution (window functions run in SELECT, after WHERE/GROUP BY/HAVING) → can't filter rn in same query.
+- Second attempt CORRECT: ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC), no GROUP BY for Task A; CTE + WHERE rank=1 for Task B. Predictions 5/3 and 2/closed/closed all correct.
+- Coaching: avoid alias `rank` (reserved word / built-in fn) — use `rn`; QUALIFY is the Databricks shortcut.
 
-Databricks setup cell:
-```sql
-WITH case_status AS (
-  SELECT * FROM VALUES
-    (10,'open',DATE'2026-01-01'),(10,'in_review',DATE'2026-01-03'),(10,'closed',DATE'2026-01-05'),
-    (20,'open',DATE'2026-01-02'),(20,'closed',DATE'2026-01-04')
-  AS case_status(case_id, status, updated_at)
-)
-SELECT * FROM case_status;
+## Active Quest — Lesson 4: PySpark DataFrames (select & filter)
+Reward: +300 XP (levels to L6), unlocks "PySpark pilot". First PySpark lesson — SQL→PySpark mental map.
+
+Databricks setup cell (Python):
+```python
+from pyspark.sql import functions as F
+data = [(101,1,50),(102,1,30),(103,2,20)]
+df = spark.createDataFrame(data, ["order_id","customer_id","amount"])
+df.show()
 ```
 
-- **Task A — Rank:** `ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC) AS rn`. Returns all 5 rows; case 10 'open' = rn 3.
-- **Task B — Latest per case:** wrap in CTE, `WHERE rn = 1` (or `QUALIFY`). Returns 2 rows: case 10 closed, case 20 closed. Trap: can't put ROW_NUMBER() in WHERE directly.
-- **Validation:** predict total rows (5), rn of 'open' (3), then rows (2) + latest statuses (both closed).
-- **Success criteria:** correct ROW_NUMBER/PARTITION BY/ORDER BY DESC; correctly filters rn=1 via CTE or QUALIFY; explains partition reset.
+- **Task A — Translate:** SELECT order_id, amount FROM orders WHERE amount>25 → `df.filter(F.col("amount")>25).select("order_id","amount").show()`. Returns 2 rows: 101, 102 (103 dropped). Trap: PySpark is lazy — need an action (.show()).
+- **Task B — withColumn:** add fee = 10% of amount → `df.withColumn("fee", F.col("amount")*0.1)`. fee on order 101 = 5.0.
+- **Validation:** predict rows (2) + order_ids (101,102); predict fee on 101 (5.0).
+- **Success criteria:** correct .filter/.where + .select + action; correct withColumn with *0.1; understands lazy vs action.
 
-### Status: ACTIVE — Lesson 3 loaded into dashboard. Awaiting Rafael's ranking query + predictions.
+### Status: ACTIVE — Lesson 4 loaded into dashboard. Awaiting Rafael's PySpark code + predictions.
 
-### Next up (preview): L5 Databricks Builder (PySpark DataFrame basics), then L6 PySpark Converter (translate SQL→PySpark groupBy/agg), L7 Metrics Investigator (debug a doubled GMV case = mini/final boss).
+### Next up (preview): L6 PySpark Converter (translate SQL GROUP BY/agg → PySpark df.groupBy().agg() — his known gap: scrambles groupBy/agg/sum order), L7 Metrics Investigator (debug a doubled-GMV case = mini-boss), L8 Data Specialist final boss.
 
 ## Interactive Dashboard
 - Live app source: `public/index.html` (interactive HUD + Lesson 1 quest grader; saves progress in browser localStorage).
@@ -110,3 +112,4 @@ SELECT * FROM case_status;
 - 2026-06-27 — Resumed session. Built interactive HTML dashboard; set up GitHub Pages hosting (Actions workflow). Lesson 1 (Joins) mini-boss validation pending (Rafael says he finished; awaiting his 2 explanations to award +150 XP / L3).
 - 2026-06-27 — Lesson 1 mini-boss PASSED. Awarded +150 XP → Level 3, unlocked Join master, Joins 30→70, Investigation 60→65. Advanced dashboard to Lesson 2 (Duplicate Detection). HUD now lives in the web app — stop pasting ASCII HUDs in chat.
 - 2026-06-27 — Lesson 2 PASSED (query + all predictions correct). Awarded +175 XP → Level 4, unlocked Dedup detective, Data quality 25→70. Advanced dashboard to Lesson 3 (Window Functions). Rafael is moving fast and getting everything right on first try.
+- 2026-06-27 — Lesson 3: first attempt erred (GROUP BY/HAVING on a window) — taught logical execution order; second attempt PASSED. Awarded +250 XP → Level 5, unlocked Window wizard, Window functions 20→70, Investigation 68→70. Advanced dashboard to Lesson 4 (PySpark DataFrames). Note: he asked "pq da errado?" in Portuguese — comfortable in PT, course running in EN.
