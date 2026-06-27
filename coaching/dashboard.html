@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Data Specialist — Quest Dashboard</title>
+<style>
+  :root{
+    --bg:#0a0b14; --panel:#12141f; --panel2:#171a28; --line:#262a3d;
+    --txt:#e7e9f5; --mut:#8a90ad; --cyan:#27e0c8; --purple:#9b6dff;
+    --pink:#ff5db1; --gold:#ffcc4d; --green:#3ddc84; --red:#ff5d6c;
+    --glow:0 0 24px rgba(155,109,255,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    background:radial-gradient(1200px 600px at 80% -10%,rgba(155,109,255,.18),transparent),
+               radial-gradient(900px 500px at -10% 110%,rgba(39,224,200,.12),transparent),
+               var(--bg);
+    color:var(--txt); padding:24px; line-height:1.5; min-height:100vh;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  h1,h2,h3{margin:0}
+  .mut{color:var(--mut)}
+  .grid{display:grid;gap:18px}
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line); border-radius:18px; padding:20px;
+    box-shadow:0 10px 40px rgba(0,0,0,.4);
+  }
+  .row{display:flex;gap:18px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:260px}
+
+  /* ===== HUD HEADER ===== */
+  .hud{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .avatar{
+    width:78px;height:78px;border-radius:18px;flex:none;
+    display:grid;place-items:center;font-size:34px;
+    background:linear-gradient(135deg,var(--purple),var(--cyan));
+    box-shadow:var(--glow);
+  }
+  .hud-main{flex:1;min-width:260px}
+  .lvl-badge{
+    display:inline-block;font-weight:700;font-size:12px;letter-spacing:1px;
+    color:#0a0b14;background:linear-gradient(90deg,var(--gold),#ffe08a);
+    padding:3px 10px;border-radius:999px;margin-bottom:6px;
+  }
+  .xp-track{height:18px;border-radius:999px;background:#0c0e18;border:1px solid var(--line);overflow:hidden;position:relative;margin-top:8px}
+  .xp-fill{height:100%;width:0;border-radius:999px;
+    background:linear-gradient(90deg,var(--purple),var(--cyan));
+    box-shadow:0 0 18px rgba(39,224,200,.6);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+  .xp-label{display:flex;justify-content:space-between;font-size:13px;margin-top:6px;color:var(--mut)}
+  .pill{font-size:12px;background:#1c2030;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--cyan)}
+
+  /* ===== SKILLS ===== */
+  .skill{margin-bottom:12px}
+  .skill .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+  .bar{height:9px;border-radius:999px;background:#0c0e18;border:1px solid var(--line);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:999px;transition:width 1s ease}
+  .focus{color:var(--gold);font-weight:700}
+  .tag-focus{font-size:10px;background:var(--gold);color:#0a0b14;border-radius:6px;padding:1px 6px;margin-left:6px;font-weight:700}
+
+  /* ===== BADGES ===== */
+  .badges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .badge{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;font-size:12px}
+  .badge .ic{font-size:22px;display:block;margin-bottom:4px}
+  .badge.earned{border-color:rgba(61,220,132,.5);box-shadow:0 0 14px rgba(61,220,132,.15)}
+  .badge.earned .ic{filter:none}
+  .badge.locked{opacity:.55}
+  .badge.locked .ic{filter:grayscale(1)}
+  .badge.prog{border-color:rgba(255,204,77,.6);box-shadow:0 0 14px rgba(255,204,77,.18)}
+
+  /* ===== LEVEL MAP ===== */
+  .map{display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:6px}
+  .node{flex:none;text-align:center;min-width:96px}
+  .dot{width:38px;height:38px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;font-weight:700;
+    background:#1c2030;border:2px solid var(--line);font-size:14px}
+  .node.done .dot{background:linear-gradient(135deg,var(--green),#1f9d57);border-color:transparent;color:#06210f}
+  .node.cur .dot{background:linear-gradient(135deg,var(--purple),var(--cyan));border-color:#fff;box-shadow:var(--glow);color:#fff}
+  .node small{font-size:11px;color:var(--mut);display:block;line-height:1.25}
+  .node.cur small{color:var(--txt)}
+  .link{height:2px;flex:1;min-width:14px;background:var(--line)}
+
+  /* ===== QUEST ===== */
+  .quest-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .reward{font-size:13px;color:var(--gold);font-weight:700}
+  .task{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+  .task h3{font-size:15px;display:flex;align-items:center;gap:8px}
+  .task .desc{font-size:13px;color:var(--mut);margin:6px 0 12px}
+  .lblrow{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+  label{font-size:12px;color:var(--mut);display:block;margin-bottom:4px}
+  textarea,input[type=text],input[type=number]{
+    width:100%;background:#0c0e18;color:var(--txt);border:1px solid var(--line);
+    border-radius:10px;padding:10px;font-family:"Consolas",monospace;font-size:13px;resize:vertical}
+  textarea{min-height:96px}
+  input[type=number]{width:90px;font-family:inherit;text-align:center}
+  .num-wrap{flex:none}
+  button{
+    cursor:pointer;border:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13px;
+    background:linear-gradient(90deg,var(--purple),var(--cyan));color:#0a0b14;transition:transform .1s}
+  button:hover{transform:translateY(-1px)}
+  button.ghost{background:#1c2030;color:var(--txt);border:1px solid var(--line)}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .verdict{margin-top:12px;font-size:13px;border-radius:10px;padding:10px 12px;display:none}
+  .verdict.ok{display:block;background:rgba(61,220,132,.12);border:1px solid rgba(61,220,132,.4);color:#bff7d6}
+  .verdict.warn{display:block;background:rgba(255,204,77,.1);border:1px solid rgba(255,204,77,.4);color:#ffe7a6}
+  .verdict.bad{display:block;background:rgba(255,93,108,.1);border:1px solid rgba(255,93,108,.4);color:#ffc3c9}
+  .verdict ul{margin:8px 0 0;padding-left:18px}
+  .check{color:var(--green)} .cross{color:var(--red)}
+  .setup{font-family:Consolas,monospace;font-size:12px;background:#0c0e18;border:1px solid var(--line);
+    border-radius:10px;padding:12px;white-space:pre;overflow-x:auto;color:#cdd3ee}
+  .done-stamp{display:none;color:var(--green);font-weight:700;font-size:13px;margin-top:8px}
+  details summary{cursor:pointer;color:var(--cyan);font-size:13px;margin-top:8px;user-select:none}
+  .hintbox{font-size:13px;color:var(--mut);background:#0c0e18;border:1px dashed var(--line);border-radius:10px;padding:10px;margin-top:8px}
+  .footbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mut)}
+  .toast{position:fixed;inset:0;display:none;place-items:center;background:rgba(5,6,12,.7);z-index:50}
+  .toast .box{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--purple);
+    border-radius:20px;padding:34px 40px;text-align:center;box-shadow:var(--glow);max-width:420px}
+  .toast .big{font-size:42px;margin-bottom:6px}
+  .sec-title{font-size:13px;letter-spacing:1.5px;color:var(--mut);text-transform:uppercase;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="wrap grid">
+
+  <!-- HUD HEADER -->
+  <div class="card hud">
+    <div class="avatar">🧑‍💻</div>
+    <div class="hud-main">
+      <div class="lvl-badge" id="lvlBadge">LEVEL 2 — ⚔️ SQL OPERATOR</div>
+      <h1 style="font-size:22px">Rafael <span class="mut" style="font-size:14px;font-weight:400">· Data Specialist @ YipitData</span></h1>
+      <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+      <div class="xp-label"><span id="xpText">XP 200 / 350</span><span id="xpNext">+150 XP → 🎉 Level 3</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      <span class="pill" id="badgeCount">🏅 4 / 9 badges</span>
+      <span class="pill">🎯 Focus: Joins</span>
+    </div>
+  </div>
+
+  <!-- SKILLS + BADGES -->
+  <div class="row">
+    <div class="card">
+      <div class="sec-title">📊 Skill Stats</div>
+      <div id="skills"></div>
+    </div>
+    <div class="card">
+      <div class="sec-title">🏅 Badges</div>
+      <div class="badges" id="badges"></div>
+    </div>
+  </div>
+
+  <!-- LEVEL MAP -->
+  <div class="card">
+    <div class="sec-title">🗺️ Level Map</div>
+    <div class="map" id="map"></div>
+  </div>
+
+  <!-- ACTIVE QUEST -->
+  <div class="card">
+    <div class="quest-h">
+      <div>
+        <div class="sec-title" style="margin-bottom:4px">📜 Active Quest</div>
+        <h2 style="font-size:20px">Lesson 1 — Joins</h2>
+      </div>
+      <div class="reward">Reward: +150 XP · 🔓 Unlocks “Join master”</div>
+    </div>
+
+    <details style="margin-top:12px">
+      <summary>▶ Show the Databricks setup cell</summary>
+      <div class="setup">WITH customers AS (
+  SELECT * FROM VALUES (1,'Ana'),(2,'Bruno'),(3,'Carla')
+    AS customers(customer_id, name)
+),
+orders AS (
+  SELECT * FROM VALUES (101,1,50),(102,1,30),(103,2,20)
+    AS orders(order_id, customer_id, amount)
+)
+SELECT * FROM customers;</div>
+    </details>
+
+    <!-- TASK A -->
+    <div class="task">
+      <h3>🎯 Task A — INNER JOIN</h3>
+      <p class="desc">List <b>order_id</b>, customer <b>name</b>, and <b>amount</b> — one row per order. Predict the row count <i>before</i> you run it.</p>
+      <div class="lblrow">
+        <div class="num-wrap">
+          <label>Your row prediction</label>
+          <input type="number" id="predA" placeholder="?" />
+        </div>
+      </div>
+      <label>Your Task A query (paste it here)</label>
+      <textarea id="qA" placeholder="SELECT ... FROM orders o INNER JOIN customers c ON ..."></textarea>
+      <div class="btns">
+        <button onclick="checkA()">✅ Check prediction & query</button>
+        <button class="ghost" onclick="toggleHint('hintA')">💡 Hint</button>
+      </div>
+      <div class="hintbox" id="hintA" style="display:none">An INNER JOIN keeps only rows where the join key matches on <b>both</b> sides. Carla has no row in <code>orders</code>, so her key never matches → she drops out. Driver table = <code>orders</code> (one row per order).</div>
+      <div class="verdict" id="vA"></div>
+      <div class="done-stamp" id="doneA">✔ Task A cleared</div>
+    </div>
+
+    <!-- TASK B -->
+    <div class="task">
+      <h3>🎯 Task B — LEFT JOIN <span class="tag-focus">THE TRAP</span></h3>
+      <p class="desc">Order <b>count per customer</b>, including <b>Carla = 0</b>. ⚠️ <code>COUNT(*)</code> gives Carla <b>1</b> (it counts her customer row). You must <code>COUNT(</code> the right column <code>)</code> so she shows <b>0</b>.</p>
+      <div class="lblrow">
+        <div class="num-wrap"><label>Predict: Ana</label><input type="number" id="predAna" placeholder="?"/></div>
+        <div class="num-wrap"><label>Predict: Bruno</label><input type="number" id="predBruno" placeholder="?"/></div>
+        <div class="num-wrap"><label>Predict: Carla</label><input type="number" id="predCarla" placeholder="?"/></div>
+      </div>
+      <label>Your Task B query (paste it here)</label>
+      <textarea id="qB" placeholder="SELECT c.name, COUNT(o.order_id) AS orders&#10;FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id&#10;GROUP BY c.name ..."></textarea>
+      <div class="btns">
+        <button onclick="checkB()">✅ Check prediction & query</button>
+        <button class="ghost" onclick="toggleHint('hintB')">💡 Hint</button>
+      </div>
+      <div class="hintbox" id="hintB" style="display:none">LEFT JOIN keeps <b>every</b> customer, filling NULLs where there's no matching order. <code>COUNT(*)</code> counts rows (Carla still has 1 row, full of NULLs → counts 1). <code>COUNT(o.order_id)</code> ignores NULLs → Carla = 0. Drive from <code>customers</code> with LEFT JOIN.</div>
+      <div class="verdict" id="vB"></div>
+      <div class="done-stamp" id="doneB">✔ Task B cleared</div>
+    </div>
+
+    <div class="footbar" style="margin-top:16px">
+      <span id="progressMsg">Complete both tasks to claim +150 XP and level up.</span>
+      <span>
+        <button class="ghost" onclick="resetAll()">↺ Reset progress</button>
+      </span>
+    </div>
+  </div>
+
+  <div class="footbar">
+    <span>💾 Progress auto-saves in your browser (localStorage).</span>
+    <span>Data Specialist Program · Session 2026-06-27</span>
+  </div>
+</div>
+
+<!-- LEVEL UP TOAST -->
+<div class="toast" id="toast" onclick="this.style.display='none'">
+  <div class="box">
+    <div class="big">🎉</div>
+    <h2 style="color:var(--gold)">LEVEL UP!</h2>
+    <p>You cleared <b>Lesson 1 — Joins</b>, earned <b>+150 XP</b>, unlocked the <b>🏅 Join master</b> badge, and advanced to <b>Level 3 — Data Quality Analyst</b>!</p>
+    <p class="mut" style="font-size:12px">(click anywhere to close)</p>
+  </div>
+</div>
+
+<script>
+/* ===================== PLAYER STATE ===================== */
+const STATE = {
+  level:2, levelName:"SQL Operator", xp:200, xpMax:350, lessonXP:150,
+  skills:[
+    {n:"SQL foundations",v:80,c:"var(--cyan)"},
+    {n:"Filtering & aggregation",v:75,c:"var(--cyan)"},
+    {n:"Investigation instinct",v:60,c:"var(--purple)"},
+    {n:"Joins",v:30,c:"var(--gold)",focus:true},
+    {n:"PySpark",v:25,c:"var(--purple)"},
+    {n:"Data quality",v:25,c:"var(--purple)"},
+    {n:"Window functions",v:20,c:"var(--purple)"},
+  ],
+  badges:[
+    {n:"Calibration complete",i:"🎓",s:"earned"},
+    {n:"Grain master",i:"🌾",s:"earned"},
+    {n:"Level 1 cleared",i:"🏞️",s:"earned"},
+    {n:"Sharp instinct",i:"🔍",s:"earned"},
+    {n:"Join master",i:"🔗",s:"prog"},
+    {n:"Dedup detective",i:"🕵️",s:"locked"},
+    {n:"Window wizard",i:"🪟",s:"locked"},
+    {n:"PySpark pilot",i:"⚡",s:"locked"},
+    {n:"Data Specialist",i:"👑",s:"locked"},
+  ],
+  levels:[
+    {n:"Explorer",done:true},{n:"SQL Op",cur:true},{n:"Data Q Analyst"},
+    {n:"Window Func"},{n:"D'bricks Builder"},{n:"PySpark Conv"},
+    {n:"Metrics Invest"},{n:"👑 Specialist"},
+  ],
+};
+
+/* ===================== RENDER ===================== */
+function pct(v){return Math.min(100,Math.round(v))}
+function renderHUD(){
+  document.getElementById('xpFill').style.width = pct(STATE.xp/STATE.xpMax*100)+"%";
+  document.getElementById('xpText').textContent = `XP ${STATE.xp} / ${STATE.xpMax}`;
+  const earned = STATE.badges.filter(b=>b.s==='earned').length;
+  document.getElementById('badgeCount').textContent = `🏅 ${earned} / ${STATE.badges.length} badges`;
+}
+function renderSkills(){
+  document.getElementById('skills').innerHTML = STATE.skills.map(s=>`
+    <div class="skill">
+      <div class="top">
+        <span class="${s.focus?'focus':''}">${s.n}${s.focus?'<span class="tag-focus">FOCUS</span>':''}</span>
+        <span class="${s.focus?'focus':'mut'}">${s.v}</span>
+      </div>
+      <div class="bar"><i style="width:${pct(s.v)}%;background:${s.c}"></i></div>
+    </div>`).join('');
+}
+function renderBadges(){
+  document.getElementById('badges').innerHTML = STATE.badges.map(b=>{
+    const lock = b.s==='locked'?'🔒 ':b.s==='prog'?'⟳ ':'';
+    return `<div class="badge ${b.s}"><span class="ic">${b.i}</span>${lock}${b.n}</div>`;
+  }).join('');
+}
+function renderMap(){
+  let html='';
+  STATE.levels.forEach((l,i)=>{
+    const cls = l.done?'done':l.cur?'cur':'';
+    const sym = l.done?'✓':(i+1);
+    html += `<div class="node ${cls}"><div class="dot">${sym}</div><small>L${i+1}<br>${l.n}</small></div>`;
+    if(i<STATE.levels.length-1) html+='<div class="link"></div>';
+  });
+  document.getElementById('map').innerHTML = html;
+}
+function toggleHint(id){const e=document.getElementById(id);e.style.display=e.style.display==='none'?'block':'none';}
+
+/* ===================== TASK LOGIC ===================== */
+const norm = s => (s||'').toLowerCase().replace(/\s+/g,' ').trim();
+let passA=false, passB=false;
+
+function checkA(){
+  const q = norm(document.getElementById('qA').value);
+  const pred = document.getElementById('predA').value.trim();
+  const v = document.getElementById('vA');
+  let issues=[], wins=[];
+
+  // prediction
+  if(pred==='') issues.push("Add your <b>row prediction</b> first — predicting before running is the whole drill.");
+  else if(pred==='3') wins.push("Prediction = <b>3 rows</b> ✓ — spot on. 3 orders → 3 rows.");
+  else issues.push(`You predicted <b>${pred}</b>. INNER JOIN returns one row per matching order, and there are <b>3 orders</b>. Re-think and re-predict.`);
+
+  // query checks
+  if(!/select/.test(q)) issues.push("No <code>SELECT</code> found — paste your full query.");
+  if(!/join/.test(q)) issues.push("No <code>JOIN</code> found. Task A needs an <b>INNER JOIN</b> between orders and customers.");
+  else if(/left join|right join|full join/.test(q)) issues.push("You used an outer join. Task A wants an <b>INNER JOIN</b> (only matching rows).");
+  else if(/inner join|(^|[^t])\bjoin\b/.test(q)) wins.push("INNER JOIN used ✓ — only matching rows survive.");
+  if(!/on .*=.*/.test(q) && !/using/.test(q)) issues.push("Missing the join condition — you need <code>ON o.customer_id = c.customer_id</code>.");
+  const hasCols = /order_id/.test(q) && /name/.test(q) && /amount/.test(q);
+  if(hasCols) wins.push("All 3 columns present (order_id, name, amount) ✓");
+  else issues.push("Make sure you select all three: <b>order_id, name, amount</b>.");
+
+  if(issues.length===0){
+    passA=true;
+    v.className='verdict ok';
+    v.innerHTML = `<b>✅ Task A cleared!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
+      <p style="margin-top:8px">Why is Carla absent? She has <b>no matching row in orders</b>, so an INNER JOIN drops her. That's the core mental model. 🔗</p>`;
+    document.getElementById('doneA').style.display='block';
+  } else {
+    v.className = wins.length?'verdict warn':'verdict bad';
+    v.innerHTML = `<b>Almost — fix these:</b><ul>${issues.map(x=>'<li class="cross">'+x+'</li>').join('')}</ul>
+      ${wins.length?'<b>Good so far:</b><ul>'+wins.map(w=>'<li class="check">'+w+'</li>').join('')+'</ul>':''}`;
+  }
+  save(); maybeLevelUp();
+}
+
+function checkB(){
+  const q = norm(document.getElementById('qB').value);
+  const a=document.getElementById('predAna').value.trim();
+  const b=document.getElementById('predBruno').value.trim();
+  const c=document.getElementById('predCarla').value.trim();
+  const v = document.getElementById('vB');
+  let issues=[], wins=[];
+
+  // predictions
+  if(a===''||b===''||c==='') issues.push("Fill in all three predictions (Ana / Bruno / Carla) before checking.");
+  else {
+    if(a==='2'&&b==='1'&&c==='0') wins.push("Predictions <b>Ana 2, Bruno 1, Carla 0</b> ✓ — exactly right.");
+    else issues.push(`You predicted Ana ${a}, Bruno ${b}, Carla ${c}. Correct is <b>Ana 2, Bruno 1, Carla 0</b>. (Ana has orders 101 & 102, Bruno 103, Carla none.)`);
+  }
+
+  // join type
+  if(!/left join/.test(q)) issues.push("Task B needs a <b>LEFT JOIN</b> so Carla (no orders) is still kept.");
+  else wins.push("LEFT JOIN used ✓ — every customer is kept, Carla included.");
+
+  // the COUNT trap
+  if(/count\s*\(\s*\*\s*\)/.test(q)){
+    issues.push("⚠️ <b>The trap!</b> <code>COUNT(*)</code> counts Carla's customer row (full of NULLs) → she shows <b>1</b>, not 0. Switch to <code>COUNT(o.order_id)</code>.");
+  } else if(/count\s*\(\s*[a-z_]*\.?(order_id|amount|order)/.test(q)){
+    wins.push("<code>COUNT(&lt;orders column&gt;)</code> used ✓ — NULLs are ignored, so Carla = 0. You beat the trap. 🪤");
+  } else if(/count/.test(q)){
+    issues.push("You used COUNT but I can't confirm it targets an <b>orders</b> column. Use <code>COUNT(o.order_id)</code> so NULLs (Carla) aren't counted.");
+  } else {
+    issues.push("No <code>COUNT</code> found — you need to count orders per customer.");
+  }
+
+  if(!/group by/.test(q)) issues.push("Missing <code>GROUP BY</code> — group by the customer (name or customer_id).");
+  else wins.push("GROUP BY present ✓");
+
+  if(issues.length===0){
+    passB=true;
+    v.className='verdict ok';
+    v.innerHTML=`<b>✅ Task B cleared — trap defused!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
+      <p style="margin-top:8px"><b>Why COUNT(column) beat COUNT(*):</b> <code>COUNT(*)</code> counts <i>rows</i> (Carla still has 1 row after the LEFT JOIN). <code>COUNT(o.order_id)</code> counts <i>non-NULL values</i> — Carla's order_id is NULL, so she correctly scores 0. 🎯</p>`;
+    document.getElementById('doneB').style.display='block';
+  } else {
+    v.className= wins.length?'verdict warn':'verdict bad';
+    v.innerHTML=`<b>Close — fix these:</b><ul>${issues.map(x=>'<li class="cross">'+x+'</li>').join('')}</ul>
+      ${wins.length?'<b>Good so far:</b><ul>'+wins.map(w=>'<li class="check">'+w+'</li>').join('')+'</ul>':''}`;
+  }
+  save(); maybeLevelUp();
+}
+
+function maybeLevelUp(){
+  const msg=document.getElementById('progressMsg');
+  if(passA&&passB){
+    msg.innerHTML="🏆 Both tasks cleared! Quest complete.";
+    if(!STATE.leveled){
+      STATE.leveled=true;
+      // animate XP to full then level
+      STATE.xp = STATE.xpMax;
+      STATE.skills.find(s=>s.n==='Joins').v=70;
+      STATE.badges.find(b=>b.n==='Join master').s='earned';
+      renderHUD(); renderSkills(); renderBadges();
+      document.getElementById('toast').style.display='grid';
+      save();
+    }
+  } else if(passA||passB){
+    msg.innerHTML="🟡 One task down, one to go!";
+  }
+}
+
+/* ===================== PERSISTENCE ===================== */
+function save(){
+  localStorage.setItem('ds_quest', JSON.stringify({
+    qA:val('qA'),predA:val('predA'),qB:val('qB'),
+    predAna:val('predAna'),predBruno:val('predBruno'),predCarla:val('predCarla'),
+    passA,passB,leveled:STATE.leveled||false
+  }));
+}
+function val(id){return document.getElementById(id).value}
+function load(){
+  const raw=localStorage.getItem('ds_quest'); if(!raw)return;
+  try{
+    const d=JSON.parse(raw);
+    ['qA','predA','qB','predAna','predBruno','predCarla'].forEach(k=>{if(d[k]!=null)document.getElementById(k).value=d[k];});
+    if(d.passA){passA=true;checkA();}
+    if(d.passB){passB=true;checkB();}
+    if(d.leveled){STATE.leveled=true;maybeLevelUp();document.getElementById('toast').style.display='none';}
+  }catch(e){}
+}
+function resetAll(){
+  if(!confirm('Reset Lesson 1 progress?'))return;
+  localStorage.removeItem('ds_quest');location.reload();
+}
+
+/* ===================== INIT ===================== */
+renderHUD();renderSkills();renderBadges();renderMap();load();
+</script>
+</body>
+</html>
