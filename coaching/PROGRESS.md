@@ -87,5 +87,10 @@ SELECT * FROM customers;
 
 ### Status: AWAITING Rafael's Task A + Task B queries and his predictions.
 
+## Interactive Dashboard
+- Live app source: `public/index.html` (interactive HUD + Lesson 1 quest grader; saves progress in browser localStorage).
+- Hosted via GitHub Pages (workflow `.github/workflows/pages.yml`, deploys on push to the coaching branch).
+- Public URL: https://rafael12vignoli-stack.github.io/dataspecialist/
+
 ## Session Log
-- 2026-06-27 — Resumed session. Re-rendered HUD, confirmed Lesson 1 (Joins), requested Task A/B queries + predictions. Initialized this progress file.
+- 2026-06-27 — Resumed session. Built interactive HTML dashboard; set up GitHub Pages hosting (Actions workflow). Lesson 1 (Joins) mini-boss validation pending (Rafael says he finished; awaiting his 2 explanations to award +150 XP / L3).
