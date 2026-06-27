@@ -32,7 +32,6 @@
   .row{display:flex;gap:18px;flex-wrap:wrap}
   .row>*{flex:1;min-width:260px}
 
-  /* ===== HUD HEADER ===== */
   .hud{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
   .avatar{
     width:78px;height:78px;border-radius:18px;flex:none;
@@ -53,7 +52,6 @@
   .xp-label{display:flex;justify-content:space-between;font-size:13px;margin-top:6px;color:var(--mut)}
   .pill{font-size:12px;background:#1c2030;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--cyan)}
 
-  /* ===== SKILLS ===== */
   .skill{margin-bottom:12px}
   .skill .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
   .bar{height:9px;border-radius:999px;background:#0c0e18;border:1px solid var(--line);overflow:hidden}
@@ -61,17 +59,14 @@
   .focus{color:var(--gold);font-weight:700}
   .tag-focus{font-size:10px;background:var(--gold);color:#0a0b14;border-radius:6px;padding:1px 6px;margin-left:6px;font-weight:700}
 
-  /* ===== BADGES ===== */
   .badges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   .badge{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;font-size:12px}
   .badge .ic{font-size:22px;display:block;margin-bottom:4px}
   .badge.earned{border-color:rgba(61,220,132,.5);box-shadow:0 0 14px rgba(61,220,132,.15)}
-  .badge.earned .ic{filter:none}
   .badge.locked{opacity:.55}
   .badge.locked .ic{filter:grayscale(1)}
   .badge.prog{border-color:rgba(255,204,77,.6);box-shadow:0 0 14px rgba(255,204,77,.18)}
 
-  /* ===== LEVEL MAP ===== */
   .map{display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:6px}
   .node{flex:none;text-align:center;min-width:96px}
   .dot{width:38px;height:38px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;font-weight:700;
@@ -81,8 +76,8 @@
   .node small{font-size:11px;color:var(--mut);display:block;line-height:1.25}
   .node.cur small{color:var(--txt)}
   .link{height:2px;flex:1;min-width:14px;background:var(--line)}
+  .link.done{background:linear-gradient(90deg,var(--green),#1f9d57)}
 
-  /* ===== QUEST ===== */
   .quest-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
   .reward{font-size:13px;color:var(--gold);font-weight:700}
   .task{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
@@ -94,7 +89,7 @@
     width:100%;background:#0c0e18;color:var(--txt);border:1px solid var(--line);
     border-radius:10px;padding:10px;font-family:"Consolas",monospace;font-size:13px;resize:vertical}
   textarea{min-height:96px}
-  input[type=number]{width:90px;font-family:inherit;text-align:center}
+  input[type=number],input[type=text]{width:120px;text-align:center;font-family:inherit}
   .num-wrap{flex:none}
   button{
     cursor:pointer;border:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13px;
@@ -119,6 +114,8 @@
     border-radius:20px;padding:34px 40px;text-align:center;box-shadow:var(--glow);max-width:420px}
   .toast .big{font-size:42px;margin-bottom:6px}
   .sec-title{font-size:13px;letter-spacing:1.5px;color:var(--mut);text-transform:uppercase;margin-bottom:14px}
+  .cleared{font-size:12px;color:var(--green);border:1px solid rgba(61,220,132,.4);background:rgba(61,220,132,.08);
+    border-radius:8px;padding:2px 8px;font-weight:700}
 </style>
 </head>
 <body>
@@ -128,14 +125,14 @@
   <div class="card hud">
     <div class="avatar">🧑‍💻</div>
     <div class="hud-main">
-      <div class="lvl-badge" id="lvlBadge">LEVEL 2 — ⚔️ SQL OPERATOR</div>
+      <div class="lvl-badge" id="lvlBadge"></div>
       <h1 style="font-size:22px">Rafael <span class="mut" style="font-size:14px;font-weight:400">· Data Specialist @ YipitData</span></h1>
       <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
-      <div class="xp-label"><span id="xpText">XP 200 / 350</span><span id="xpNext">+150 XP → 🎉 Level 3</span></div>
+      <div class="xp-label"><span id="xpText"></span><span id="xpNext"></span></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-      <span class="pill" id="badgeCount">🏅 4 / 9 badges</span>
-      <span class="pill">🎯 Focus: Joins</span>
+      <span class="pill" id="badgeCount"></span>
+      <span class="pill" id="focusPill"></span>
     </div>
   </div>
 
@@ -157,81 +154,80 @@
     <div class="map" id="map"></div>
   </div>
 
-  <!-- ACTIVE QUEST -->
+  <!-- ACTIVE QUEST: LESSON 2 -->
   <div class="card">
     <div class="quest-h">
       <div>
-        <div class="sec-title" style="margin-bottom:4px">📜 Active Quest</div>
-        <h2 style="font-size:20px">Lesson 1 — Joins</h2>
+        <div class="sec-title" style="margin-bottom:4px">📜 Active Quest <span class="cleared">✔ Lesson 1: Joins cleared</span></div>
+        <h2 style="font-size:20px">Lesson 2 — Duplicate Detection 🕵️</h2>
       </div>
-      <div class="reward">Reward: +150 XP · 🔓 Unlocks “Join master”</div>
+      <div class="reward">Reward: +175 XP · 🔓 Unlocks “Dedup detective”</div>
     </div>
 
-    <details style="margin-top:12px">
-      <summary>▶ Show the Databricks setup cell</summary>
-      <div class="setup">WITH customers AS (
-  SELECT * FROM VALUES (1,'Ana'),(2,'Bruno'),(3,'Carla')
-    AS customers(customer_id, name)
-),
-orders AS (
-  SELECT * FROM VALUES (101,1,50),(102,1,30),(103,2,20)
-    AS orders(order_id, customer_id, amount)
+    <p class="desc" style="margin-top:10px">
+      <b>Why it matters:</b> duplicate rows silently <b>inflate your metrics</b> — double-counted credit-card transactions pump up <b>GMV</b>, repeated scrape rows pump up <b>OEU / new cases</b>. A Data Specialist must <b>detect</b> and <b>quantify</b> dupes before trusting any table.
+      <br>⚠️ <b>The trap:</b> <code>SELECT DISTINCT</code> only hides identical rows — it never tells you <i>which</i> key is duplicated or <i>how many</i> times. The real tool is <code>GROUP BY … HAVING COUNT(*) &gt; 1</code>.
+    </p>
+
+    <details style="margin-top:8px" open>
+      <summary>▶ Databricks setup cell (run this first)</summary>
+      <div class="setup">WITH payments AS (
+  SELECT * FROM VALUES
+    (1, 'AnaCard',   100),
+    (2, 'BrunoCard',  50),
+    (3, 'CarlaCard',  75),
+    (2, 'BrunoCard',  50)   -- &larr; duplicated transaction (txn 2 logged twice)
+  AS payments(txn_id, card, amount)
 )
-SELECT * FROM customers;</div>
+SELECT * FROM payments;</div>
     </details>
 
     <!-- TASK A -->
     <div class="task">
-      <h3>🎯 Task A — INNER JOIN</h3>
-      <p class="desc">List <b>order_id</b>, customer <b>name</b>, and <b>amount</b> — one row per order. Predict the row count <i>before</i> you run it.</p>
+      <h3>🎯 Task A — Detect the duplicate</h3>
+      <p class="desc">Write a query that returns <b>only the txn_id(s) that appear more than once</b>, with how many times. Predict the answer before running.</p>
       <div class="lblrow">
-        <div class="num-wrap">
-          <label>Your row prediction</label>
-          <input type="number" id="predA" placeholder="?" />
-        </div>
+        <div class="num-wrap"><label>Which txn_id is duplicated?</label><input type="number" id="dupId" placeholder="?"/></div>
+        <div class="num-wrap"><label>How many times?</label><input type="number" id="dupCount" placeholder="?"/></div>
       </div>
-      <label>Your Task A query (paste it here)</label>
-      <textarea id="qA" placeholder="SELECT ... FROM orders o INNER JOIN customers c ON ..."></textarea>
+      <label>Your detection query</label>
+      <textarea id="qDup" placeholder="SELECT txn_id, COUNT(*) AS n&#10;FROM payments&#10;GROUP BY txn_id&#10;HAVING COUNT(*) > 1"></textarea>
       <div class="btns">
-        <button onclick="checkA()">✅ Check prediction & query</button>
-        <button class="ghost" onclick="toggleHint('hintA')">💡 Hint</button>
+        <button onclick="checkDup()">✅ Check</button>
+        <button class="ghost" onclick="toggleHint('hintDup')">💡 Hint</button>
       </div>
-      <div class="hintbox" id="hintA" style="display:none">An INNER JOIN keeps only rows where the join key matches on <b>both</b> sides. Carla has no row in <code>orders</code>, so her key never matches → she drops out. Driver table = <code>orders</code> (one row per order).</div>
-      <div class="verdict" id="vA"></div>
-      <div class="done-stamp" id="doneA">✔ Task A cleared</div>
+      <div class="hintbox" id="hintDup" style="display:none">Group rows by the key you suspect (<code>txn_id</code>), count rows per group with <code>COUNT(*)</code>, then keep only groups bigger than 1 using <code>HAVING COUNT(*) &gt; 1</code>. <code>HAVING</code> = a <code>WHERE</code> that runs <i>after</i> grouping.</div>
+      <div class="verdict" id="vDup"></div>
+      <div class="done-stamp" id="doneDup">✔ Duplicate detected</div>
     </div>
 
     <!-- TASK B -->
     <div class="task">
-      <h3>🎯 Task B — LEFT JOIN <span class="tag-focus">THE TRAP</span></h3>
-      <p class="desc">Order <b>count per customer</b>, including <b>Carla = 0</b>. ⚠️ <code>COUNT(*)</code> gives Carla <b>1</b> (it counts her customer row). You must <code>COUNT(</code> the right column <code>)</code> so she shows <b>0</b>.</p>
+      <h3>🎯 Task B — Quantify the GMV impact <span class="tag-focus">THE WHY</span></h3>
+      <p class="desc">The dupe inflates GMV. Fill in all three (do the math from the setup data):</p>
       <div class="lblrow">
-        <div class="num-wrap"><label>Predict: Ana</label><input type="number" id="predAna" placeholder="?"/></div>
-        <div class="num-wrap"><label>Predict: Bruno</label><input type="number" id="predBruno" placeholder="?"/></div>
-        <div class="num-wrap"><label>Predict: Carla</label><input type="number" id="predCarla" placeholder="?"/></div>
+        <div class="num-wrap"><label>Naive SUM(amount)<br>(with dupe)</label><input type="number" id="gmvNaive" placeholder="?"/></div>
+        <div class="num-wrap"><label>True GMV<br>(deduped)</label><input type="number" id="gmvTrue" placeholder="?"/></div>
+        <div class="num-wrap"><label>Inflation<br>(over-count)</label><input type="number" id="gmvInflate" placeholder="?"/></div>
       </div>
-      <label>Your Task B query (paste it here)</label>
-      <textarea id="qB" placeholder="SELECT c.name, COUNT(o.order_id) AS orders&#10;FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id&#10;GROUP BY c.name ..."></textarea>
       <div class="btns">
-        <button onclick="checkB()">✅ Check prediction & query</button>
-        <button class="ghost" onclick="toggleHint('hintB')">💡 Hint</button>
+        <button onclick="checkGmv()">✅ Check</button>
+        <button class="ghost" onclick="toggleHint('hintGmv')">💡 Hint</button>
       </div>
-      <div class="hintbox" id="hintB" style="display:none">LEFT JOIN keeps <b>every</b> customer, filling NULLs where there's no matching order. <code>COUNT(*)</code> counts rows (Carla still has 1 row, full of NULLs → counts 1). <code>COUNT(o.order_id)</code> ignores NULLs → Carla = 0. Drive from <code>customers</code> with LEFT JOIN.</div>
-      <div class="verdict" id="vB"></div>
-      <div class="done-stamp" id="doneB">✔ Task B cleared</div>
+      <div class="hintbox" id="hintGmv" style="display:none">Naive = add all 4 rows. True = add the 3 distinct transactions (count txn 2 once). Inflation = Naive − True. Amounts: 100, 50, 75, and the duplicated 50.</div>
+      <div class="verdict" id="vGmv"></div>
+      <div class="done-stamp" id="doneGmv">✔ Impact quantified</div>
     </div>
 
     <div class="footbar" style="margin-top:16px">
-      <span id="progressMsg">Complete both tasks to claim +150 XP and level up.</span>
-      <span>
-        <button class="ghost" onclick="resetAll()">↺ Reset progress</button>
-      </span>
+      <span id="progressMsg">Clear both tasks to claim +175 XP and reach Level 4.</span>
+      <span><button class="ghost" onclick="resetAll()">↺ Reset progress</button></span>
     </div>
   </div>
 
   <div class="footbar">
     <span>💾 Progress auto-saves in your browser (localStorage).</span>
-    <span>Data Specialist Program · Session 2026-06-27</span>
+    <span>Data Specialist Program · L3 Data Quality Analyst</span>
   </div>
 </div>
 
@@ -240,22 +236,24 @@ SELECT * FROM customers;</div>
   <div class="box">
     <div class="big">🎉</div>
     <h2 style="color:var(--gold)">LEVEL UP!</h2>
-    <p>You cleared <b>Lesson 1 — Joins</b>, earned <b>+150 XP</b>, unlocked the <b>🏅 Join master</b> badge, and advanced to <b>Level 3 — Data Quality Analyst</b>!</p>
+    <p>You cleared <b>Lesson 2 — Duplicate Detection</b>, earned <b>+175 XP</b>, unlocked <b>🏅 Dedup detective</b>, and advanced to <b>Level 4 — Window Function Navigator</b>!</p>
     <p class="mut" style="font-size:12px">(click anywhere to close)</p>
   </div>
 </div>
 
 <script>
-/* ===================== PLAYER STATE ===================== */
+/* ===================== PLAYER STATE (now Level 3) ===================== */
 const STATE = {
-  level:2, levelName:"SQL Operator", xp:200, xpMax:350, lessonXP:150,
+  level:3, levelName:"Data Quality Analyst", icon:"🧪",
+  xp:350, xpMax:575, lessonXP:175, nextLevel:"Level 4",
+  focus:"Data quality",
   skills:[
-    {n:"SQL foundations",v:80,c:"var(--cyan)"},
+    {n:"SQL foundations",v:82,c:"var(--cyan)"},
+    {n:"Joins",v:70,c:"var(--cyan)"},
     {n:"Filtering & aggregation",v:75,c:"var(--cyan)"},
-    {n:"Investigation instinct",v:60,c:"var(--purple)"},
-    {n:"Joins",v:30,c:"var(--gold)",focus:true},
+    {n:"Investigation instinct",v:65,c:"var(--purple)"},
+    {n:"Data quality",v:25,c:"var(--gold)",focus:true},
     {n:"PySpark",v:25,c:"var(--purple)"},
-    {n:"Data quality",v:25,c:"var(--purple)"},
     {n:"Window functions",v:20,c:"var(--purple)"},
   ],
   badges:[
@@ -263,26 +261,28 @@ const STATE = {
     {n:"Grain master",i:"🌾",s:"earned"},
     {n:"Level 1 cleared",i:"🏞️",s:"earned"},
     {n:"Sharp instinct",i:"🔍",s:"earned"},
-    {n:"Join master",i:"🔗",s:"prog"},
-    {n:"Dedup detective",i:"🕵️",s:"locked"},
+    {n:"Join master",i:"🔗",s:"earned"},
+    {n:"Dedup detective",i:"🕵️",s:"prog"},
     {n:"Window wizard",i:"🪟",s:"locked"},
     {n:"PySpark pilot",i:"⚡",s:"locked"},
     {n:"Data Specialist",i:"👑",s:"locked"},
   ],
   levels:[
-    {n:"Explorer",done:true},{n:"SQL Op",cur:true},{n:"Data Q Analyst"},
+    {n:"Explorer",done:true},{n:"SQL Op",done:true},{n:"Data Q Analyst",cur:true},
     {n:"Window Func"},{n:"D'bricks Builder"},{n:"PySpark Conv"},
     {n:"Metrics Invest"},{n:"👑 Specialist"},
   ],
 };
 
-/* ===================== RENDER ===================== */
-function pct(v){return Math.min(100,Math.round(v))}
+const pct=v=>Math.min(100,Math.round(v));
 function renderHUD(){
+  document.getElementById('lvlBadge').textContent = `LEVEL ${STATE.level} — ${STATE.icon} ${STATE.levelName.toUpperCase()}`;
   document.getElementById('xpFill').style.width = pct(STATE.xp/STATE.xpMax*100)+"%";
   document.getElementById('xpText').textContent = `XP ${STATE.xp} / ${STATE.xpMax}`;
+  document.getElementById('xpNext').textContent = `+${STATE.lessonXP} XP → 🎉 ${STATE.nextLevel}`;
   const earned = STATE.badges.filter(b=>b.s==='earned').length;
   document.getElementById('badgeCount').textContent = `🏅 ${earned} / ${STATE.badges.length} badges`;
+  document.getElementById('focusPill').textContent = `🎯 Focus: ${STATE.focus}`;
 }
 function renderSkills(){
   document.getElementById('skills').innerHTML = STATE.skills.map(s=>`
@@ -303,95 +303,81 @@ function renderBadges(){
 function renderMap(){
   let html='';
   STATE.levels.forEach((l,i)=>{
-    const cls = l.done?'done':l.cur?'cur':'';
-    const sym = l.done?'✓':(i+1);
-    html += `<div class="node ${cls}"><div class="dot">${sym}</div><small>L${i+1}<br>${l.n}</small></div>`;
-    if(i<STATE.levels.length-1) html+='<div class="link"></div>';
+    const cls=l.done?'done':l.cur?'cur':'';
+    const sym=l.done?'✓':(i+1);
+    html+=`<div class="node ${cls}"><div class="dot">${sym}</div><small>L${i+1}<br>${l.n}</small></div>`;
+    if(i<STATE.levels.length-1) html+=`<div class="link ${l.done?'done':''}"></div>`;
   });
-  document.getElementById('map').innerHTML = html;
+  document.getElementById('map').innerHTML=html;
 }
 function toggleHint(id){const e=document.getElementById(id);e.style.display=e.style.display==='none'?'block':'none';}
 
-/* ===================== TASK LOGIC ===================== */
-const norm = s => (s||'').toLowerCase().replace(/\s+/g,' ').trim();
-let passA=false, passB=false;
+/* ===================== LESSON 2 LOGIC ===================== */
+const norm=s=>(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+let passDup=false, passGmv=false;
 
-function checkA(){
-  const q = norm(document.getElementById('qA').value);
-  const pred = document.getElementById('predA').value.trim();
-  const v = document.getElementById('vA');
-  let issues=[], wins=[];
+function checkDup(){
+  const q=norm(document.getElementById('qDup').value);
+  const id=document.getElementById('dupId').value.trim();
+  const c=document.getElementById('dupCount').value.trim();
+  const v=document.getElementById('vDup');
+  let issues=[],wins=[];
 
-  // prediction
-  if(pred==='') issues.push("Add your <b>row prediction</b> first — predicting before running is the whole drill.");
-  else if(pred==='3') wins.push("Prediction = <b>3 rows</b> ✓ — spot on. 3 orders → 3 rows.");
-  else issues.push(`You predicted <b>${pred}</b>. INNER JOIN returns one row per matching order, and there are <b>3 orders</b>. Re-think and re-predict.`);
+  if(id==='2') wins.push("Duplicated txn_id = <b>2</b> ✓");
+  else if(id==='') issues.push("Predict <b>which txn_id</b> is duplicated.");
+  else issues.push(`You said txn_id ${id}. Look again — one txn appears twice in the setup. (It's BrunoCard.)`);
 
-  // query checks
-  if(!/select/.test(q)) issues.push("No <code>SELECT</code> found — paste your full query.");
-  if(!/join/.test(q)) issues.push("No <code>JOIN</code> found. Task A needs an <b>INNER JOIN</b> between orders and customers.");
-  else if(/left join|right join|full join/.test(q)) issues.push("You used an outer join. Task A wants an <b>INNER JOIN</b> (only matching rows).");
-  else if(/inner join|(^|[^t])\bjoin\b/.test(q)) wins.push("INNER JOIN used ✓ — only matching rows survive.");
-  if(!/on .*=.*/.test(q) && !/using/.test(q)) issues.push("Missing the join condition — you need <code>ON o.customer_id = c.customer_id</code>.");
-  const hasCols = /order_id/.test(q) && /name/.test(q) && /amount/.test(q);
-  if(hasCols) wins.push("All 3 columns present (order_id, name, amount) ✓");
-  else issues.push("Make sure you select all three: <b>order_id, name, amount</b>.");
+  if(c==='2') wins.push("Appears <b>2×</b> ✓");
+  else if(c==='') issues.push("Predict <b>how many times</b> it appears.");
+  else issues.push(`Count ${c}? The duplicated txn appears exactly twice.`);
+
+  if(/distinct/.test(q) && !/having/.test(q))
+    issues.push("⚠️ <b>The trap.</b> <code>SELECT DISTINCT</code> would just collapse the rows — it can't tell you the txn was duplicated or that GMV is inflated. Use <code>GROUP BY … HAVING COUNT(*) &gt; 1</code>.");
+  if(!/group by/.test(q)) issues.push("Missing <code>GROUP BY</code> — group by the key you're checking (<code>txn_id</code>).");
+  else wins.push("GROUP BY present ✓");
+  if(!/count\s*\(/.test(q)) issues.push("Missing <code>COUNT(*)</code> — you need rows-per-group.");
+  if(!/having/.test(q)) issues.push("Missing <code>HAVING COUNT(*) &gt; 1</code> — that's the filter that keeps only duplicated groups.");
+  else wins.push("HAVING COUNT(*) &gt; 1 ✓ — only duplicated groups survive.");
 
   if(issues.length===0){
-    passA=true;
-    v.className='verdict ok';
-    v.innerHTML = `<b>✅ Task A cleared!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
-      <p style="margin-top:8px">Why is Carla absent? She has <b>no matching row in orders</b>, so an INNER JOIN drops her. That's the core mental model. 🔗</p>`;
-    document.getElementById('doneA').style.display='block';
+    passDup=true; v.className='verdict ok';
+    v.innerHTML=`<b>✅ Duplicate detected!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
+      <p style="margin-top:8px">This is the move you'll run on real credit-card tables to catch double-logged transactions before they corrupt GMV. 🕵️</p>`;
+    document.getElementById('doneDup').style.display='block';
   } else {
-    v.className = wins.length?'verdict warn':'verdict bad';
-    v.innerHTML = `<b>Almost — fix these:</b><ul>${issues.map(x=>'<li class="cross">'+x+'</li>').join('')}</ul>
+    v.className=wins.length?'verdict warn':'verdict bad';
+    v.innerHTML=`<b>Almost — fix these:</b><ul>${issues.map(x=>'<li class="cross">'+x+'</li>').join('')}</ul>
       ${wins.length?'<b>Good so far:</b><ul>'+wins.map(w=>'<li class="check">'+w+'</li>').join('')+'</ul>':''}`;
   }
   save(); maybeLevelUp();
 }
 
-function checkB(){
-  const q = norm(document.getElementById('qB').value);
-  const a=document.getElementById('predAna').value.trim();
-  const b=document.getElementById('predBruno').value.trim();
-  const c=document.getElementById('predCarla').value.trim();
-  const v = document.getElementById('vB');
-  let issues=[], wins=[];
+function checkGmv(){
+  const n=document.getElementById('gmvNaive').value.trim();
+  const t=document.getElementById('gmvTrue').value.trim();
+  const inf=document.getElementById('gmvInflate').value.trim();
+  const v=document.getElementById('vGmv');
+  let issues=[],wins=[];
 
-  // predictions
-  if(a===''||b===''||c==='') issues.push("Fill in all three predictions (Ana / Bruno / Carla) before checking.");
-  else {
-    if(a==='2'&&b==='1'&&c==='0') wins.push("Predictions <b>Ana 2, Bruno 1, Carla 0</b> ✓ — exactly right.");
-    else issues.push(`You predicted Ana ${a}, Bruno ${b}, Carla ${c}. Correct is <b>Ana 2, Bruno 1, Carla 0</b>. (Ana has orders 101 & 102, Bruno 103, Carla none.)`);
-  }
+  if(n==='275') wins.push("Naive SUM = <b>275</b> ✓ (100+50+75+50)");
+  else if(n==='') issues.push("Fill in the naive SUM (add all 4 rows).");
+  else issues.push(`Naive ${n}? Add all four amounts: 100+50+75+50.`);
 
-  // join type
-  if(!/left join/.test(q)) issues.push("Task B needs a <b>LEFT JOIN</b> so Carla (no orders) is still kept.");
-  else wins.push("LEFT JOIN used ✓ — every customer is kept, Carla included.");
+  if(t==='225') wins.push("True GMV = <b>225</b> ✓ (count txn 2 once)");
+  else if(t==='') issues.push("Fill in the true GMV (dedupe txn 2).");
+  else issues.push(`True ${t}? Count the duplicated 50 only once: 100+50+75.`);
 
-  // the COUNT trap
-  if(/count\s*\(\s*\*\s*\)/.test(q)){
-    issues.push("⚠️ <b>The trap!</b> <code>COUNT(*)</code> counts Carla's customer row (full of NULLs) → she shows <b>1</b>, not 0. Switch to <code>COUNT(o.order_id)</code>.");
-  } else if(/count\s*\(\s*[a-z_]*\.?(order_id|amount|order)/.test(q)){
-    wins.push("<code>COUNT(&lt;orders column&gt;)</code> used ✓ — NULLs are ignored, so Carla = 0. You beat the trap. 🪤");
-  } else if(/count/.test(q)){
-    issues.push("You used COUNT but I can't confirm it targets an <b>orders</b> column. Use <code>COUNT(o.order_id)</code> so NULLs (Carla) aren't counted.");
-  } else {
-    issues.push("No <code>COUNT</code> found — you need to count orders per customer.");
-  }
-
-  if(!/group by/.test(q)) issues.push("Missing <code>GROUP BY</code> — group by the customer (name or customer_id).");
-  else wins.push("GROUP BY present ✓");
+  if(inf==='50') wins.push("Inflation = <b>50</b> ✓ (275 − 225)");
+  else if(inf==='') issues.push("Fill in the inflation (Naive − True).");
+  else issues.push(`Inflation ${inf}? It's Naive − True = 275 − 225.`);
 
   if(issues.length===0){
-    passB=true;
-    v.className='verdict ok';
-    v.innerHTML=`<b>✅ Task B cleared — trap defused!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
-      <p style="margin-top:8px"><b>Why COUNT(column) beat COUNT(*):</b> <code>COUNT(*)</code> counts <i>rows</i> (Carla still has 1 row after the LEFT JOIN). <code>COUNT(o.order_id)</code> counts <i>non-NULL values</i> — Carla's order_id is NULL, so she correctly scores 0. 🎯</p>`;
-    document.getElementById('doneB').style.display='block';
+    passGmv=true; v.className='verdict ok';
+    v.innerHTML=`<b>✅ Impact quantified!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
+      <p style="margin-top:8px">One dupe = <b>+50 phantom GMV</b> (≈22% overstatement here). On a real table, that's the difference between a metric your manager trusts and one that's quietly wrong. 📈</p>`;
+    document.getElementById('doneGmv').style.display='block';
   } else {
-    v.className= wins.length?'verdict warn':'verdict bad';
+    v.className=wins.length?'verdict warn':'verdict bad';
     v.innerHTML=`<b>Close — fix these:</b><ul>${issues.map(x=>'<li class="cross">'+x+'</li>').join('')}</ul>
       ${wins.length?'<b>Good so far:</b><ul>'+wins.map(w=>'<li class="check">'+w+'</li>').join('')+'</ul>':''}`;
   }
@@ -400,48 +386,39 @@ function checkB(){
 
 function maybeLevelUp(){
   const msg=document.getElementById('progressMsg');
-  if(passA&&passB){
+  if(passDup&&passGmv){
     msg.innerHTML="🏆 Both tasks cleared! Quest complete.";
     if(!STATE.leveled){
-      STATE.leveled=true;
-      // animate XP to full then level
-      STATE.xp = STATE.xpMax;
-      STATE.skills.find(s=>s.n==='Joins').v=70;
-      STATE.badges.find(b=>b.n==='Join master').s='earned';
-      renderHUD(); renderSkills(); renderBadges();
+      STATE.leveled=true; STATE.xp=STATE.xpMax;
+      STATE.skills.find(s=>s.n==='Data quality').v=70;
+      STATE.badges.find(b=>b.n==='Dedup detective').s='earned';
+      renderHUD();renderSkills();renderBadges();
       document.getElementById('toast').style.display='grid';
       save();
     }
-  } else if(passA||passB){
-    msg.innerHTML="🟡 One task down, one to go!";
-  }
+  } else if(passDup||passGmv){ msg.innerHTML="🟡 One task down, one to go!"; }
 }
 
 /* ===================== PERSISTENCE ===================== */
+const IDS=['dupId','dupCount','qDup','gmvNaive','gmvTrue','gmvInflate'];
+function val(id){const e=document.getElementById(id);return e?e.value:'';}
 function save(){
-  localStorage.setItem('ds_quest', JSON.stringify({
-    qA:val('qA'),predA:val('predA'),qB:val('qB'),
-    predAna:val('predAna'),predBruno:val('predBruno'),predCarla:val('predCarla'),
-    passA,passB,leveled:STATE.leveled||false
-  }));
+  localStorage.setItem('ds_quest_l2', JSON.stringify(
+    Object.assign({passDup,passGmv,leveled:STATE.leveled||false},
+      IDS.reduce((o,k)=>(o[k]=val(k),o),{}))));
 }
-function val(id){return document.getElementById(id).value}
 function load(){
-  const raw=localStorage.getItem('ds_quest'); if(!raw)return;
+  const raw=localStorage.getItem('ds_quest_l2'); if(!raw)return;
   try{
     const d=JSON.parse(raw);
-    ['qA','predA','qB','predAna','predBruno','predCarla'].forEach(k=>{if(d[k]!=null)document.getElementById(k).value=d[k];});
-    if(d.passA){passA=true;checkA();}
-    if(d.passB){passB=true;checkB();}
+    IDS.forEach(k=>{if(d[k]!=null){const e=document.getElementById(k);if(e)e.value=d[k];}});
+    if(d.passDup){passDup=true;checkDup();}
+    if(d.passGmv){passGmv=true;checkGmv();}
     if(d.leveled){STATE.leveled=true;maybeLevelUp();document.getElementById('toast').style.display='none';}
   }catch(e){}
 }
-function resetAll(){
-  if(!confirm('Reset Lesson 1 progress?'))return;
-  localStorage.removeItem('ds_quest');location.reload();
-}
+function resetAll(){ if(!confirm('Reset Lesson 2 progress?'))return; localStorage.removeItem('ds_quest_l2');location.reload(); }
 
-/* ===================== INIT ===================== */
 renderHUD();renderSkills();renderBadges();renderMap();load();
 </script>
 </body>

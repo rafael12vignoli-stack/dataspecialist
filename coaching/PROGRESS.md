@@ -16,35 +16,35 @@ _Last updated: 2026-06-27_
 
 ## Current State
 
-- **Level:** 2 — SQL Operator (tested out of Level 1)
-- **XP:** 200 / 350 (150 XP to L3 = exactly this lesson's reward)
+- **Level:** 3 — Data Quality Analyst (cleared L1 by testing out, L2 by completing Lesson 1: Joins)
+- **XP:** 350 / 575 (175 XP to L4 = Lesson 2 reward)
 
 ### Skill stats (0–100)
 | Skill | Value |
 |---|---|
-| SQL foundations | 80 |
+| SQL foundations | 82 |
 | Filtering & aggregation | 75 |
-| Investigation instinct | 60 |
-| Joins (current focus) | 30 |
+| Joins | 70 |
+| Investigation instinct | 65 |
+| Data quality (current focus) | 25 |
 | PySpark | 25 |
-| Data quality | 25 |
 | Window functions | 20 |
 
-### Badges (4/9 earned)
+### Badges (5/9 earned)
 - [x] Calibration complete
 - [x] Grain master
 - [x] Level 1 cleared
 - [x] Sharp instinct
-- [ ] Join master (in progress — Lesson 1)
-- [ ] Dedup detective
+- [x] Join master (earned — Lesson 1 Joins complete)
+- [ ] Dedup detective (in progress — Lesson 2)
 - [ ] Window wizard
 - [ ] PySpark pilot
 - [ ] Data Specialist (final boss)
 
 ## Level Map
 1. L1 Data Explorer — cleared
-2. **L2 SQL Operator — current**
-3. L3 Data Quality Analyst
+2. L2 SQL Operator — cleared
+3. **L3 Data Quality Analyst — current**
 4. L4 Window Function Navigator
 5. L5 Databricks Builder
 6. L6 PySpark Converter
@@ -64,28 +64,33 @@ _Last updated: 2026-06-27_
 - Connect to real workflows (credit-card/log/web-scrape data, GMV/auctions/sampling).
 - Keep the gamified interface: render HUD + level-map widgets every session.
 
-## Active Quest — Lesson 1: Joins
-Reward: +150 XP (levels to L3), unlocks "Join master".
+## COMPLETED — Lesson 1: Joins (+150 XP, L2→L3, 🏅 Join master)
+- Task A INNER JOIN = 3 rows; Rafael correctly explained Carla is absent (her customer_id isn't in orders → no match).
+- Task B LEFT JOIN: Ana 2, Bruno 1, Carla 0; Rafael correctly explained COUNT(*) counts rows while COUNT(column) counts non-null values, so Carla's NULL order_id → 0.
+- Mini-boss validation passed on both questions.
+
+## Active Quest — Lesson 2: Duplicate Detection (Data Quality)
+Reward: +175 XP (levels to L4), unlocks "Dedup detective". Targets his calibration gap (reached for SELECT DISTINCT instead of GROUP BY / HAVING COUNT(*)>1).
 
 Databricks setup cell:
 ```sql
-WITH customers AS (
-  SELECT * FROM VALUES (1,'Ana'),(2,'Bruno'),(3,'Carla')
-    AS customers(customer_id, name)
-),
-orders AS (
-  SELECT * FROM VALUES (101,1,50),(102,1,30),(103,2,20)
-    AS orders(order_id, customer_id, amount)
+WITH payments AS (
+  SELECT * FROM VALUES
+    (1,'AnaCard',100),(2,'BrunoCard',50),(3,'CarlaCard',75),
+    (2,'BrunoCard',50)   -- duplicated txn
+  AS payments(txn_id, card, amount)
 )
-SELECT * FROM customers;
+SELECT * FROM payments;
 ```
 
-- **Task A — INNER JOIN:** list order_id, customer name, amount (one row per order; should be 3 rows).
-- **Task B — LEFT JOIN:** order count per customer INCLUDING Carla with 0. Trap: COUNT(*) gives Carla 1; must COUNT the right column so she shows 0.
-- **Validation:** predict row counts BEFORE running, then run in Databricks and compare.
-- **Success criteria:** Task A returns 3 rows (and explains why Carla is absent); Task B returns Ana 2, Bruno 1, Carla 0, and explains why COUNT(column) beat COUNT(*).
+- **Task A — Detect:** `GROUP BY txn_id HAVING COUNT(*) > 1` → returns txn_id 2 (appears 2×). Trap: SELECT DISTINCT can't tell you WHICH/HOW MANY are duplicated.
+- **Task B — Quantify GMV impact:** naive SUM = 275, true (deduped) GMV = 225, inflation = 50 (~22% overstatement).
+- **Validation:** predict the dup id + the three GMV numbers before running.
+- **Success criteria:** correct detection query (GROUP BY + HAVING COUNT(*)>1, not DISTINCT); explains why DISTINCT is insufficient; correct GMV math.
 
-### Status: AWAITING Rafael's Task A + Task B queries and his predictions.
+### Status: ACTIVE — Lesson 2 loaded into dashboard. Awaiting Rafael's detection query + predictions.
+
+### Next up (preview): L3 may include a spaced-repetition mini-check, then L4 Window Functions (ROW_NUMBER / PARTITION BY, "latest row per group" — another calibration gap).
 
 ## Interactive Dashboard
 - Live app source: `public/index.html` (interactive HUD + Lesson 1 quest grader; saves progress in browser localStorage).
@@ -98,3 +103,4 @@ SELECT * FROM customers;
 
 ## Session Log
 - 2026-06-27 — Resumed session. Built interactive HTML dashboard; set up GitHub Pages hosting (Actions workflow). Lesson 1 (Joins) mini-boss validation pending (Rafael says he finished; awaiting his 2 explanations to award +150 XP / L3).
+- 2026-06-27 — Lesson 1 mini-boss PASSED. Awarded +150 XP → Level 3, unlocked Join master, Joins 30→70, Investigation 60→65. Advanced dashboard to Lesson 2 (Duplicate Detection). HUD now lives in the web app — stop pasting ASCII HUDs in chat.
