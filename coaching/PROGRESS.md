@@ -16,36 +16,36 @@ _Last updated: 2026-06-27_
 
 ## Current State
 
-- **Level:** 3 — Data Quality Analyst (cleared L1 by testing out, L2 by completing Lesson 1: Joins)
-- **XP:** 350 / 575 (175 XP to L4 = Lesson 2 reward)
+- **Level:** 4 — Window Function Navigator (cleared L1 test-out, L2 Joins, L3 Duplicate Detection)
+- **XP:** 525 / 775 (250 XP to L5 = Lesson 3 reward)
 
 ### Skill stats (0–100)
 | Skill | Value |
 |---|---|
-| SQL foundations | 82 |
+| SQL foundations | 84 |
 | Filtering & aggregation | 75 |
 | Joins | 70 |
-| Investigation instinct | 65 |
-| Data quality (current focus) | 25 |
+| Data quality | 70 |
+| Investigation instinct | 68 |
+| Window functions (current focus) | 20 |
 | PySpark | 25 |
-| Window functions | 20 |
 
-### Badges (5/9 earned)
+### Badges (6/9 earned)
 - [x] Calibration complete
 - [x] Grain master
 - [x] Level 1 cleared
 - [x] Sharp instinct
-- [x] Join master (earned — Lesson 1 Joins complete)
-- [ ] Dedup detective (in progress — Lesson 2)
-- [ ] Window wizard
+- [x] Join master (Lesson 1 Joins)
+- [x] Dedup detective (Lesson 2 Duplicate Detection)
+- [ ] Window wizard (in progress — Lesson 3)
 - [ ] PySpark pilot
 - [ ] Data Specialist (final boss)
 
 ## Level Map
 1. L1 Data Explorer — cleared
 2. L2 SQL Operator — cleared
-3. **L3 Data Quality Analyst — current**
-4. L4 Window Function Navigator
+3. L3 Data Quality Analyst — cleared
+4. **L4 Window Function Navigator — current**
 5. L5 Databricks Builder
 6. L6 PySpark Converter
 7. L7 Metrics Investigator
@@ -69,28 +69,33 @@ _Last updated: 2026-06-27_
 - Task B LEFT JOIN: Ana 2, Bruno 1, Carla 0; Rafael correctly explained COUNT(*) counts rows while COUNT(column) counts non-null values, so Carla's NULL order_id → 0.
 - Mini-boss validation passed on both questions.
 
-## Active Quest — Lesson 2: Duplicate Detection (Data Quality)
-Reward: +175 XP (levels to L4), unlocks "Dedup detective". Targets his calibration gap (reached for SELECT DISTINCT instead of GROUP BY / HAVING COUNT(*)>1).
+## COMPLETED — Lesson 2: Duplicate Detection (+175 XP, L3→L4, 🏅 Dedup detective)
+- Detection query correct: `GROUP BY txn_id HAVING COUNT(txn_id) > 1` (used GROUP BY/HAVING, NOT DISTINCT — calibration gap closed).
+- txn_id 2 appears 2×; naive SUM 275, true GMV 225, inflation 50. All correct.
+- Coaching given: COUNT(col)=COUNT(*) only when no NULLs (spaced-rep tie to Lesson 1); real dupes may need composite-key GROUP BY.
+
+## Active Quest — Lesson 3: Window Functions — latest row per group
+Reward: +250 XP (levels to L5), unlocks "Window wizard". Targets calibration gap (window mechanics: partition reset + "latest row per group").
 
 Databricks setup cell:
 ```sql
-WITH payments AS (
+WITH case_status AS (
   SELECT * FROM VALUES
-    (1,'AnaCard',100),(2,'BrunoCard',50),(3,'CarlaCard',75),
-    (2,'BrunoCard',50)   -- duplicated txn
-  AS payments(txn_id, card, amount)
+    (10,'open',DATE'2026-01-01'),(10,'in_review',DATE'2026-01-03'),(10,'closed',DATE'2026-01-05'),
+    (20,'open',DATE'2026-01-02'),(20,'closed',DATE'2026-01-04')
+  AS case_status(case_id, status, updated_at)
 )
-SELECT * FROM payments;
+SELECT * FROM case_status;
 ```
 
-- **Task A — Detect:** `GROUP BY txn_id HAVING COUNT(*) > 1` → returns txn_id 2 (appears 2×). Trap: SELECT DISTINCT can't tell you WHICH/HOW MANY are duplicated.
-- **Task B — Quantify GMV impact:** naive SUM = 275, true (deduped) GMV = 225, inflation = 50 (~22% overstatement).
-- **Validation:** predict the dup id + the three GMV numbers before running.
-- **Success criteria:** correct detection query (GROUP BY + HAVING COUNT(*)>1, not DISTINCT); explains why DISTINCT is insufficient; correct GMV math.
+- **Task A — Rank:** `ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC) AS rn`. Returns all 5 rows; case 10 'open' = rn 3.
+- **Task B — Latest per case:** wrap in CTE, `WHERE rn = 1` (or `QUALIFY`). Returns 2 rows: case 10 closed, case 20 closed. Trap: can't put ROW_NUMBER() in WHERE directly.
+- **Validation:** predict total rows (5), rn of 'open' (3), then rows (2) + latest statuses (both closed).
+- **Success criteria:** correct ROW_NUMBER/PARTITION BY/ORDER BY DESC; correctly filters rn=1 via CTE or QUALIFY; explains partition reset.
 
-### Status: ACTIVE — Lesson 2 loaded into dashboard. Awaiting Rafael's detection query + predictions.
+### Status: ACTIVE — Lesson 3 loaded into dashboard. Awaiting Rafael's ranking query + predictions.
 
-### Next up (preview): L3 may include a spaced-repetition mini-check, then L4 Window Functions (ROW_NUMBER / PARTITION BY, "latest row per group" — another calibration gap).
+### Next up (preview): L5 Databricks Builder (PySpark DataFrame basics), then L6 PySpark Converter (translate SQL→PySpark groupBy/agg), L7 Metrics Investigator (debug a doubled GMV case = mini/final boss).
 
 ## Interactive Dashboard
 - Live app source: `public/index.html` (interactive HUD + Lesson 1 quest grader; saves progress in browser localStorage).
@@ -104,3 +109,4 @@ SELECT * FROM payments;
 ## Session Log
 - 2026-06-27 — Resumed session. Built interactive HTML dashboard; set up GitHub Pages hosting (Actions workflow). Lesson 1 (Joins) mini-boss validation pending (Rafael says he finished; awaiting his 2 explanations to award +150 XP / L3).
 - 2026-06-27 — Lesson 1 mini-boss PASSED. Awarded +150 XP → Level 3, unlocked Join master, Joins 30→70, Investigation 60→65. Advanced dashboard to Lesson 2 (Duplicate Detection). HUD now lives in the web app — stop pasting ASCII HUDs in chat.
+- 2026-06-27 — Lesson 2 PASSED (query + all predictions correct). Awarded +175 XP → Level 4, unlocked Dedup detective, Data quality 25→70. Advanced dashboard to Lesson 3 (Window Functions). Rafael is moving fast and getting everything right on first try.

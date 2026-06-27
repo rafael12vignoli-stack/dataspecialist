@@ -88,8 +88,9 @@
   textarea,input[type=text],input[type=number]{
     width:100%;background:#0c0e18;color:var(--txt);border:1px solid var(--line);
     border-radius:10px;padding:10px;font-family:"Consolas",monospace;font-size:13px;resize:vertical}
-  textarea{min-height:96px}
-  input[type=number],input[type=text]{width:120px;text-align:center;font-family:inherit}
+  textarea{min-height:104px}
+  input[type=number]{width:120px;text-align:center;font-family:inherit}
+  input[type=text]{width:150px;text-align:center;font-family:inherit}
   .num-wrap{flex:none}
   button{
     cursor:pointer;border:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13px;
@@ -111,7 +112,7 @@
   .footbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mut)}
   .toast{position:fixed;inset:0;display:none;place-items:center;background:rgba(5,6,12,.7);z-index:50}
   .toast .box{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--purple);
-    border-radius:20px;padding:34px 40px;text-align:center;box-shadow:var(--glow);max-width:420px}
+    border-radius:20px;padding:34px 40px;text-align:center;box-shadow:var(--glow);max-width:440px}
   .toast .big{font-size:42px;margin-bottom:6px}
   .sec-title{font-size:13px;letter-spacing:1.5px;color:var(--mut);text-transform:uppercase;margin-bottom:14px}
   .cleared{font-size:12px;color:var(--green);border:1px solid rgba(61,220,132,.4);background:rgba(61,220,132,.08);
@@ -154,80 +155,84 @@
     <div class="map" id="map"></div>
   </div>
 
-  <!-- ACTIVE QUEST: LESSON 2 -->
+  <!-- ACTIVE QUEST: LESSON 3 -->
   <div class="card">
     <div class="quest-h">
       <div>
-        <div class="sec-title" style="margin-bottom:4px">📜 Active Quest <span class="cleared">✔ Lesson 1: Joins cleared</span></div>
-        <h2 style="font-size:20px">Lesson 2 — Duplicate Detection 🕵️</h2>
+        <div class="sec-title" style="margin-bottom:4px">📜 Active Quest <span class="cleared">✔ L1 Joins · L2 Dedup cleared</span></div>
+        <h2 style="font-size:20px">Lesson 3 — Window Functions: latest row per group 🪟</h2>
       </div>
-      <div class="reward">Reward: +175 XP · 🔓 Unlocks “Dedup detective”</div>
+      <div class="reward">Reward: +250 XP · 🔓 Unlocks “Window wizard”</div>
     </div>
 
     <p class="desc" style="margin-top:10px">
-      <b>Why it matters:</b> duplicate rows silently <b>inflate your metrics</b> — double-counted credit-card transactions pump up <b>GMV</b>, repeated scrape rows pump up <b>OEU / new cases</b>. A Data Specialist must <b>detect</b> and <b>quantify</b> dupes before trusting any table.
-      <br>⚠️ <b>The trap:</b> <code>SELECT DISTINCT</code> only hides identical rows — it never tells you <i>which</i> key is duplicated or <i>how many</i> times. The real tool is <code>GROUP BY … HAVING COUNT(*) &gt; 1</code>.
+      <b>Why it matters:</b> "give me the <b>latest status per case</b>", "the <b>most recent balance per card</b>", "keep <b>one row per key</b> (the newest)" — this is the daily bread of a Data Specialist. <code>ROW_NUMBER() OVER (PARTITION BY … ORDER BY … DESC)</code> numbers rows <i>within each group</i>; keep <code>rn = 1</code> to grab the latest.
+      <br>🧩 <b>PARTITION BY</b> = "restart the counter for each group." <b>ORDER BY … DESC</b> = "newest first, so rn 1 = latest."
+      <br>⚠️ <b>The trap:</b> you <i>cannot</i> write <code>WHERE rn = 1</code> in the same SELECT that creates <code>rn</code> — wrap it in a CTE/subquery first (or use Databricks <code>QUALIFY</code>).
     </p>
 
     <details style="margin-top:8px" open>
       <summary>▶ Databricks setup cell (run this first)</summary>
-      <div class="setup">WITH payments AS (
+      <div class="setup">WITH case_status AS (
   SELECT * FROM VALUES
-    (1, 'AnaCard',   100),
-    (2, 'BrunoCard',  50),
-    (3, 'CarlaCard',  75),
-    (2, 'BrunoCard',  50)   -- &larr; duplicated transaction (txn 2 logged twice)
-  AS payments(txn_id, card, amount)
+    (10, 'open',      DATE'2026-01-01'),
+    (10, 'in_review', DATE'2026-01-03'),
+    (10, 'closed',    DATE'2026-01-05'),
+    (20, 'open',      DATE'2026-01-02'),
+    (20, 'closed',    DATE'2026-01-04')
+  AS case_status(case_id, status, updated_at)
 )
-SELECT * FROM payments;</div>
+SELECT * FROM case_status;</div>
     </details>
 
     <!-- TASK A -->
     <div class="task">
-      <h3>🎯 Task A — Detect the duplicate</h3>
-      <p class="desc">Write a query that returns <b>only the txn_id(s) that appear more than once</b>, with how many times. Predict the answer before running.</p>
+      <h3>🎯 Task A — Rank rows within each case</h3>
+      <p class="desc">Add a column <code>rn</code> = <code>ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC)</code>. Predict before running.</p>
       <div class="lblrow">
-        <div class="num-wrap"><label>Which txn_id is duplicated?</label><input type="number" id="dupId" placeholder="?"/></div>
-        <div class="num-wrap"><label>How many times?</label><input type="number" id="dupCount" placeholder="?"/></div>
+        <div class="num-wrap"><label>Total rows returned</label><input type="number" id="rnRows" placeholder="?"/></div>
+        <div class="num-wrap"><label>rn of case 10's 'open' row</label><input type="number" id="rnOpen" placeholder="?"/></div>
       </div>
-      <label>Your detection query</label>
-      <textarea id="qDup" placeholder="SELECT txn_id, COUNT(*) AS n&#10;FROM payments&#10;GROUP BY txn_id&#10;HAVING COUNT(*) > 1"></textarea>
+      <label>Your ranking query</label>
+      <textarea id="qRank" placeholder="SELECT case_id, status, updated_at,&#10;  ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC) AS rn&#10;FROM case_status"></textarea>
       <div class="btns">
-        <button onclick="checkDup()">✅ Check</button>
-        <button class="ghost" onclick="toggleHint('hintDup')">💡 Hint</button>
+        <button onclick="checkRank()">✅ Check</button>
+        <button class="ghost" onclick="toggleHint('hintRank')">💡 Hint</button>
       </div>
-      <div class="hintbox" id="hintDup" style="display:none">Group rows by the key you suspect (<code>txn_id</code>), count rows per group with <code>COUNT(*)</code>, then keep only groups bigger than 1 using <code>HAVING COUNT(*) &gt; 1</code>. <code>HAVING</code> = a <code>WHERE</code> that runs <i>after</i> grouping.</div>
-      <div class="verdict" id="vDup"></div>
-      <div class="done-stamp" id="doneDup">✔ Duplicate detected</div>
+      <div class="hintbox" id="hintRank" style="display:none">The window function keeps ALL rows (5 of them) and just adds a number. <code>PARTITION BY case_id</code> restarts numbering per case. <code>ORDER BY updated_at DESC</code> → newest gets rn 1. So case 10's oldest row ('open', Jan 1) gets the highest rn.</div>
+      <div class="verdict" id="vRank"></div>
+      <div class="done-stamp" id="doneRank">✔ Ranking correct</div>
     </div>
 
     <!-- TASK B -->
     <div class="task">
-      <h3>🎯 Task B — Quantify the GMV impact <span class="tag-focus">THE WHY</span></h3>
-      <p class="desc">The dupe inflates GMV. Fill in all three (do the math from the setup data):</p>
+      <h3>🎯 Task B — Keep only the latest row per case <span class="tag-focus">THE TRAP</span></h3>
+      <p class="desc">Return one row per case: its <b>latest</b> status. Wrap Task A in a CTE and filter <code>rn = 1</code> (or use <code>QUALIFY</code>).</p>
       <div class="lblrow">
-        <div class="num-wrap"><label>Naive SUM(amount)<br>(with dupe)</label><input type="number" id="gmvNaive" placeholder="?"/></div>
-        <div class="num-wrap"><label>True GMV<br>(deduped)</label><input type="number" id="gmvTrue" placeholder="?"/></div>
-        <div class="num-wrap"><label>Inflation<br>(over-count)</label><input type="number" id="gmvInflate" placeholder="?"/></div>
+        <div class="num-wrap"><label>Rows returned</label><input type="number" id="latRows" placeholder="?"/></div>
+        <div class="num-wrap"><label>Case 10 latest status</label><input type="text" id="lat10" placeholder="?"/></div>
+        <div class="num-wrap"><label>Case 20 latest status</label><input type="text" id="lat20" placeholder="?"/></div>
       </div>
+      <label>Your "latest per case" query</label>
+      <textarea id="qLatest" placeholder="WITH ranked AS (&#10;  SELECT ..., ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC) AS rn&#10;  FROM case_status&#10;)&#10;SELECT case_id, status FROM ranked WHERE rn = 1"></textarea>
       <div class="btns">
-        <button onclick="checkGmv()">✅ Check</button>
-        <button class="ghost" onclick="toggleHint('hintGmv')">💡 Hint</button>
+        <button onclick="checkLatest()">✅ Check</button>
+        <button class="ghost" onclick="toggleHint('hintLatest')">💡 Hint</button>
       </div>
-      <div class="hintbox" id="hintGmv" style="display:none">Naive = add all 4 rows. True = add the 3 distinct transactions (count txn 2 once). Inflation = Naive − True. Amounts: 100, 50, 75, and the duplicated 50.</div>
-      <div class="verdict" id="vGmv"></div>
-      <div class="done-stamp" id="doneGmv">✔ Impact quantified</div>
+      <div class="hintbox" id="hintLatest" style="display:none">You can't filter a window function in the same WHERE. Two valid ways: (1) put the ROW_NUMBER query in a CTE <code>WITH ranked AS (...)</code> then <code>SELECT ... FROM ranked WHERE rn = 1</code>; or (2) Databricks shortcut: add <code>QUALIFY ROW_NUMBER() OVER (...) = 1</code> directly.</div>
+      <div class="verdict" id="vLatest"></div>
+      <div class="done-stamp" id="doneLatest">✔ Latest-per-group correct</div>
     </div>
 
     <div class="footbar" style="margin-top:16px">
-      <span id="progressMsg">Clear both tasks to claim +175 XP and reach Level 4.</span>
+      <span id="progressMsg">Clear both tasks to claim +250 XP and reach Level 5.</span>
       <span><button class="ghost" onclick="resetAll()">↺ Reset progress</button></span>
     </div>
   </div>
 
   <div class="footbar">
     <span>💾 Progress auto-saves in your browser (localStorage).</span>
-    <span>Data Specialist Program · L3 Data Quality Analyst</span>
+    <span>Data Specialist Program · L4 Window Function Navigator</span>
   </div>
 </div>
 
@@ -236,25 +241,25 @@ SELECT * FROM payments;</div>
   <div class="box">
     <div class="big">🎉</div>
     <h2 style="color:var(--gold)">LEVEL UP!</h2>
-    <p>You cleared <b>Lesson 2 — Duplicate Detection</b>, earned <b>+175 XP</b>, unlocked <b>🏅 Dedup detective</b>, and advanced to <b>Level 4 — Window Function Navigator</b>!</p>
+    <p>You cleared <b>Lesson 3 — Window Functions</b>, earned <b>+250 XP</b>, unlocked <b>🏅 Window wizard</b>, and advanced to <b>Level 5 — Databricks Builder</b>!</p>
     <p class="mut" style="font-size:12px">(click anywhere to close)</p>
   </div>
 </div>
 
 <script>
-/* ===================== PLAYER STATE (now Level 3) ===================== */
+/* ===================== PLAYER STATE (now Level 4) ===================== */
 const STATE = {
-  level:3, levelName:"Data Quality Analyst", icon:"🧪",
-  xp:350, xpMax:575, lessonXP:175, nextLevel:"Level 4",
-  focus:"Data quality",
+  level:4, levelName:"Window Function Navigator", icon:"🪟",
+  xp:525, xpMax:775, lessonXP:250, nextLevel:"Level 5",
+  focus:"Window functions",
   skills:[
-    {n:"SQL foundations",v:82,c:"var(--cyan)"},
+    {n:"SQL foundations",v:84,c:"var(--cyan)"},
     {n:"Joins",v:70,c:"var(--cyan)"},
+    {n:"Data quality",v:70,c:"var(--cyan)"},
     {n:"Filtering & aggregation",v:75,c:"var(--cyan)"},
-    {n:"Investigation instinct",v:65,c:"var(--purple)"},
-    {n:"Data quality",v:25,c:"var(--gold)",focus:true},
+    {n:"Investigation instinct",v:68,c:"var(--purple)"},
+    {n:"Window functions",v:20,c:"var(--gold)",focus:true},
     {n:"PySpark",v:25,c:"var(--purple)"},
-    {n:"Window functions",v:20,c:"var(--purple)"},
   ],
   badges:[
     {n:"Calibration complete",i:"🎓",s:"earned"},
@@ -262,14 +267,14 @@ const STATE = {
     {n:"Level 1 cleared",i:"🏞️",s:"earned"},
     {n:"Sharp instinct",i:"🔍",s:"earned"},
     {n:"Join master",i:"🔗",s:"earned"},
-    {n:"Dedup detective",i:"🕵️",s:"prog"},
-    {n:"Window wizard",i:"🪟",s:"locked"},
+    {n:"Dedup detective",i:"🕵️",s:"earned"},
+    {n:"Window wizard",i:"🪟",s:"prog"},
     {n:"PySpark pilot",i:"⚡",s:"locked"},
     {n:"Data Specialist",i:"👑",s:"locked"},
   ],
   levels:[
-    {n:"Explorer",done:true},{n:"SQL Op",done:true},{n:"Data Q Analyst",cur:true},
-    {n:"Window Func"},{n:"D'bricks Builder"},{n:"PySpark Conv"},
+    {n:"Explorer",done:true},{n:"SQL Op",done:true},{n:"Data Q Analyst",done:true},
+    {n:"Window Func",cur:true},{n:"D'bricks Builder"},{n:"PySpark Conv"},
     {n:"Metrics Invest"},{n:"👑 Specialist"},
   ],
 };
@@ -312,38 +317,39 @@ function renderMap(){
 }
 function toggleHint(id){const e=document.getElementById(id);e.style.display=e.style.display==='none'?'block':'none';}
 
-/* ===================== LESSON 2 LOGIC ===================== */
+/* ===================== LESSON 3 LOGIC ===================== */
 const norm=s=>(s||'').toLowerCase().replace(/\s+/g,' ').trim();
-let passDup=false, passGmv=false;
+let passRank=false, passLatest=false;
 
-function checkDup(){
-  const q=norm(document.getElementById('qDup').value);
-  const id=document.getElementById('dupId').value.trim();
-  const c=document.getElementById('dupCount').value.trim();
-  const v=document.getElementById('vDup');
+function checkRank(){
+  const q=norm(document.getElementById('qRank').value);
+  const rows=document.getElementById('rnRows').value.trim();
+  const open=document.getElementById('rnOpen').value.trim();
+  const v=document.getElementById('vRank');
   let issues=[],wins=[];
 
-  if(id==='2') wins.push("Duplicated txn_id = <b>2</b> ✓");
-  else if(id==='') issues.push("Predict <b>which txn_id</b> is duplicated.");
-  else issues.push(`You said txn_id ${id}. Look again — one txn appears twice in the setup. (It's BrunoCard.)`);
+  if(rows==='5') wins.push("Total rows = <b>5</b> ✓ — window functions keep every row, just add a number.");
+  else if(rows==='') issues.push("Predict the <b>total rows returned</b>.");
+  else issues.push(`${rows} rows? A window function doesn't drop rows — all <b>5</b> come back, each with an rn.`);
 
-  if(c==='2') wins.push("Appears <b>2×</b> ✓");
-  else if(c==='') issues.push("Predict <b>how many times</b> it appears.");
-  else issues.push(`Count ${c}? The duplicated txn appears exactly twice.`);
+  if(open==='3') wins.push("rn of case 10 'open' = <b>3</b> ✓ — it's the oldest, and DESC puts newest at rn 1.");
+  else if(open==='') issues.push("Predict the <b>rn of case 10's 'open' row</b>.");
+  else issues.push(`rn ${open}? Case 10 has 3 rows; with ORDER BY ... DESC the oldest ('open', Jan 1) is rn <b>3</b>.`);
 
-  if(/distinct/.test(q) && !/having/.test(q))
-    issues.push("⚠️ <b>The trap.</b> <code>SELECT DISTINCT</code> would just collapse the rows — it can't tell you the txn was duplicated or that GMV is inflated. Use <code>GROUP BY … HAVING COUNT(*) &gt; 1</code>.");
-  if(!/group by/.test(q)) issues.push("Missing <code>GROUP BY</code> — group by the key you're checking (<code>txn_id</code>).");
-  else wins.push("GROUP BY present ✓");
-  if(!/count\s*\(/.test(q)) issues.push("Missing <code>COUNT(*)</code> — you need rows-per-group.");
-  if(!/having/.test(q)) issues.push("Missing <code>HAVING COUNT(*) &gt; 1</code> — that's the filter that keeps only duplicated groups.");
-  else wins.push("HAVING COUNT(*) &gt; 1 ✓ — only duplicated groups survive.");
+  if(!/row_number\s*\(\s*\)/.test(q)) issues.push("Use <code>ROW_NUMBER()</code> as the window function.");
+  else wins.push("ROW_NUMBER() used ✓");
+  if(!/over\s*\(/.test(q)) issues.push("A window function needs an <code>OVER ( … )</code> clause.");
+  if(!/partition by case_id/.test(q)) issues.push("Add <code>PARTITION BY case_id</code> so numbering restarts per case.");
+  else wins.push("PARTITION BY case_id ✓ — counter resets per case.");
+  if(!/order by/.test(q)) issues.push("Add <code>ORDER BY updated_at</code> inside OVER — without it, 'latest' is undefined.");
+  else if(!/desc/.test(q)) issues.push("Use <code>ORDER BY updated_at DESC</code> so rn 1 = the newest row (matches your prediction).");
+  else wins.push("ORDER BY updated_at DESC ✓ — newest first.");
 
   if(issues.length===0){
-    passDup=true; v.className='verdict ok';
-    v.innerHTML=`<b>✅ Duplicate detected!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
-      <p style="margin-top:8px">This is the move you'll run on real credit-card tables to catch double-logged transactions before they corrupt GMV. 🕵️</p>`;
-    document.getElementById('doneDup').style.display='block';
+    passRank=true; v.className='verdict ok';
+    v.innerHTML=`<b>✅ Ranking correct!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
+      <p style="margin-top:8px">PARTITION = "per group", ORDER = "which is #1". You now own the hardest mental model in SQL. 🪟</p>`;
+    document.getElementById('doneRank').style.display='block';
   } else {
     v.className=wins.length?'verdict warn':'verdict bad';
     v.innerHTML=`<b>Almost — fix these:</b><ul>${issues.map(x=>'<li class="cross">'+x+'</li>').join('')}</ul>
@@ -352,30 +358,45 @@ function checkDup(){
   save(); maybeLevelUp();
 }
 
-function checkGmv(){
-  const n=document.getElementById('gmvNaive').value.trim();
-  const t=document.getElementById('gmvTrue').value.trim();
-  const inf=document.getElementById('gmvInflate').value.trim();
-  const v=document.getElementById('vGmv');
+function checkLatest(){
+  const q=norm(document.getElementById('qLatest').value);
+  const rows=document.getElementById('latRows').value.trim();
+  const c10=norm(document.getElementById('lat10').value);
+  const c20=norm(document.getElementById('lat20').value);
+  const v=document.getElementById('vLatest');
   let issues=[],wins=[];
 
-  if(n==='275') wins.push("Naive SUM = <b>275</b> ✓ (100+50+75+50)");
-  else if(n==='') issues.push("Fill in the naive SUM (add all 4 rows).");
-  else issues.push(`Naive ${n}? Add all four amounts: 100+50+75+50.`);
+  if(rows==='2') wins.push("Rows = <b>2</b> ✓ — one latest row per case.");
+  else if(rows==='') issues.push("Predict the <b>rows returned</b>.");
+  else issues.push(`${rows}? Two cases → <b>2</b> rows (one latest each).`);
 
-  if(t==='225') wins.push("True GMV = <b>225</b> ✓ (count txn 2 once)");
-  else if(t==='') issues.push("Fill in the true GMV (dedupe txn 2).");
-  else issues.push(`True ${t}? Count the duplicated 50 only once: 100+50+75.`);
+  if(c10==='closed') wins.push("Case 10 latest = <b>closed</b> ✓ (Jan 5).");
+  else if(c10==='') issues.push("Predict case 10's latest status.");
+  else issues.push(`Case 10 → its newest row (Jan 5) is <b>closed</b>, not "${c10}".`);
 
-  if(inf==='50') wins.push("Inflation = <b>50</b> ✓ (275 − 225)");
-  else if(inf==='') issues.push("Fill in the inflation (Naive − True).");
-  else issues.push(`Inflation ${inf}? It's Naive − True = 275 − 225.`);
+  if(c20==='closed') wins.push("Case 20 latest = <b>closed</b> ✓ (Jan 4).");
+  else if(c20==='') issues.push("Predict case 20's latest status.");
+  else issues.push(`Case 20 → its newest row (Jan 4) is <b>closed</b>, not "${c20}".`);
+
+  const hasRowNum=/row_number\s*\(\s*\)/.test(q);
+  const usesQualify=/qualify/.test(q);
+  const usesCTE=/with .* as \(/.test(q) && /where/.test(q) && /=\s*1/.test(q);
+  if(!hasRowNum) issues.push("Still need <code>ROW_NUMBER() OVER (PARTITION BY case_id ORDER BY updated_at DESC)</code>.");
+  if(usesQualify){
+    wins.push("QUALIFY used ✓ — clean Databricks way to filter a window function.");
+  } else if(usesCTE){
+    wins.push("CTE + WHERE rn = 1 ✓ — you filtered the ranked rows correctly.");
+  } else if(/where .*row_number/.test(q)){
+    issues.push("⚠️ <b>The trap.</b> You can't put <code>ROW_NUMBER()</code> directly in <code>WHERE</code>. Wrap it in a CTE then <code>WHERE rn = 1</code>, or use <code>QUALIFY … = 1</code>.");
+  } else {
+    issues.push("To keep only the latest, filter <code>rn = 1</code> — via a CTE (<code>WITH ranked AS (...) … WHERE rn = 1</code>) or <code>QUALIFY</code>.");
+  }
 
   if(issues.length===0){
-    passGmv=true; v.className='verdict ok';
-    v.innerHTML=`<b>✅ Impact quantified!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
-      <p style="margin-top:8px">One dupe = <b>+50 phantom GMV</b> (≈22% overstatement here). On a real table, that's the difference between a metric your manager trusts and one that's quietly wrong. 📈</p>`;
-    document.getElementById('doneGmv').style.display='block';
+    passLatest=true; v.className='verdict ok';
+    v.innerHTML=`<b>✅ Latest-per-group nailed!</b><ul>${wins.map(w=>'<li class="check">'+w+'</li>').join('')}</ul>
+      <p style="margin-top:8px">This exact pattern is how you'd grab the most recent balance per card, latest status per case, or dedup keeping the newest record. 🏆</p>`;
+    document.getElementById('doneLatest').style.display='block';
   } else {
     v.className=wins.length?'verdict warn':'verdict bad';
     v.innerHTML=`<b>Close — fix these:</b><ul>${issues.map(x=>'<li class="cross">'+x+'</li>').join('')}</ul>
@@ -386,38 +407,38 @@ function checkGmv(){
 
 function maybeLevelUp(){
   const msg=document.getElementById('progressMsg');
-  if(passDup&&passGmv){
+  if(passRank&&passLatest){
     msg.innerHTML="🏆 Both tasks cleared! Quest complete.";
     if(!STATE.leveled){
       STATE.leveled=true; STATE.xp=STATE.xpMax;
-      STATE.skills.find(s=>s.n==='Data quality').v=70;
-      STATE.badges.find(b=>b.n==='Dedup detective').s='earned';
+      STATE.skills.find(s=>s.n==='Window functions').v=70;
+      STATE.badges.find(b=>b.n==='Window wizard').s='earned';
       renderHUD();renderSkills();renderBadges();
       document.getElementById('toast').style.display='grid';
       save();
     }
-  } else if(passDup||passGmv){ msg.innerHTML="🟡 One task down, one to go!"; }
+  } else if(passRank||passLatest){ msg.innerHTML="🟡 One task down, one to go!"; }
 }
 
 /* ===================== PERSISTENCE ===================== */
-const IDS=['dupId','dupCount','qDup','gmvNaive','gmvTrue','gmvInflate'];
+const IDS=['rnRows','rnOpen','qRank','latRows','lat10','lat20','qLatest'];
 function val(id){const e=document.getElementById(id);return e?e.value:'';}
 function save(){
-  localStorage.setItem('ds_quest_l2', JSON.stringify(
-    Object.assign({passDup,passGmv,leveled:STATE.leveled||false},
+  localStorage.setItem('ds_quest_l3', JSON.stringify(
+    Object.assign({passRank,passLatest,leveled:STATE.leveled||false},
       IDS.reduce((o,k)=>(o[k]=val(k),o),{}))));
 }
 function load(){
-  const raw=localStorage.getItem('ds_quest_l2'); if(!raw)return;
+  const raw=localStorage.getItem('ds_quest_l3'); if(!raw)return;
   try{
     const d=JSON.parse(raw);
     IDS.forEach(k=>{if(d[k]!=null){const e=document.getElementById(k);if(e)e.value=d[k];}});
-    if(d.passDup){passDup=true;checkDup();}
-    if(d.passGmv){passGmv=true;checkGmv();}
+    if(d.passRank){passRank=true;checkRank();}
+    if(d.passLatest){passLatest=true;checkLatest();}
     if(d.leveled){STATE.leveled=true;maybeLevelUp();document.getElementById('toast').style.display='none';}
   }catch(e){}
 }
-function resetAll(){ if(!confirm('Reset Lesson 2 progress?'))return; localStorage.removeItem('ds_quest_l2');location.reload(); }
+function resetAll(){ if(!confirm('Reset Lesson 3 progress?'))return; localStorage.removeItem('ds_quest_l3');location.reload(); }
 
 renderHUD();renderSkills();renderBadges();renderMap();load();
 </script>
