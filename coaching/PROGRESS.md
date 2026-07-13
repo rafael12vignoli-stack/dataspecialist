@@ -3,7 +3,7 @@
 > Persistent memory for Rafael's gamified Data Specialist training program.
 > Update this file at the end of every session so progress survives across sessions.
 
-_Last updated: 2026-06-27_
+_Last updated: 2026-07-13_
 
 ## Player
 
@@ -97,6 +97,9 @@ df.show()
 
 ### Status: ACTIVE — Lesson 4 loaded into dashboard. Awaiting Rafael's PySpark code + predictions.
 
+### Side quest (2026-07-13): DataFrame → SQL bridge — OPEN
+Rafael brought a real work notebook (etl_toolkit `source_ereceipts` e-receipts DataFrame) and asked how to query it with SQL. Taught: `df.createOrReplaceTempView("orders_tmp")` → `%sql` / `spark.sql()` (no data copied, session-only, use `_tmp` suffix to avoid confusion with catalog tables); `df.write.saveAsTable()` only for permanent/shared results and to check YipitData team conventions first. Validation task pending: create the view on his real df and confirm `SELECT COUNT(*)` matches `df.count()`. This is the L5 Databricks Builder theme applied at work — great sign he's using the skills on real data.
+
 ### Next up (preview): L6 PySpark Converter (translate SQL GROUP BY/agg → PySpark df.groupBy().agg() — his known gap: scrambles groupBy/agg/sum order), L7 Metrics Investigator (debug a doubled-GMV case = mini-boss), L8 Data Specialist final boss.
 
 ## Interactive Dashboard
@@ -113,3 +116,4 @@ df.show()
 - 2026-06-27 — Lesson 1 mini-boss PASSED. Awarded +150 XP → Level 3, unlocked Join master, Joins 30→70, Investigation 60→65. Advanced dashboard to Lesson 2 (Duplicate Detection). HUD now lives in the web app — stop pasting ASCII HUDs in chat.
 - 2026-06-27 — Lesson 2 PASSED (query + all predictions correct). Awarded +175 XP → Level 4, unlocked Dedup detective, Data quality 25→70. Advanced dashboard to Lesson 3 (Window Functions). Rafael is moving fast and getting everything right on first try.
 - 2026-06-27 — Lesson 3: first attempt erred (GROUP BY/HAVING on a window) — taught logical execution order; second attempt PASSED. Awarded +250 XP → Level 5, unlocked Window wizard, Window functions 20→70, Investigation 68→70. Advanced dashboard to Lesson 4 (PySpark DataFrames). Note: he asked "pq da errado?" in Portuguese — comfortable in PT, course running in EN.
+- 2026-07-13 — Side quest (asked in PT, answered in PT): how to query a real work PySpark DataFrame with SQL. Taught temp views (`createOrReplaceTempView` + `%sql`/`spark.sql`) vs `saveAsTable`. Gave validation task (view COUNT(*) vs `df.count()`) — awaiting his result. No XP awarded yet (award a small bonus ~+25 XP when he reports the validation). Lesson 4 tasks still pending.
